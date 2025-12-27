@@ -1,18 +1,18 @@
-title: Ship Your [SaaS]{class="text-primary"} at light speed
-description: Build production-ready SaaS applications with Nuxt UI's powerful components, authentication flows, and enterprise features. The same component library trusted by the entire Nuxt ecosystem.
+title:[Xamayca]{class="text-primary"} Technologies
+description: A tech start up born from the need of proud Black and Woke spaces/innovations.
 seo:
-  title: Nuxt UI SaaS Template
-  description: Create stunning, fast and production-ready SaaS applications with Nuxt UI. 100+ Vue components, authentication, dark mode, and enterprise features built on Tailwind CSS.
+  title: Xamayca technologies
+  description: A tech start up focused on using the latest technologies across web PC and mobile to deliver new and exciting woke experiences.
 navigation: false
 hero:
   links:
-    - label: Get started
+    - label: Learn more
       icon: i-lucide-arrow-right
       trailing: true
-      to: https://ui.nuxt.com/docs/getting-started/installation/nuxt
+      to: /About
       target: _blank
       size: xl
-    - label: Use this template
+    - label: Get started
       icon: i-simple-icons-github
       size: xl
       color: neutral
@@ -20,8 +20,8 @@ hero:
       to: https://github.com/nuxt-ui-templates/saas
       target: _blank
 sections:
-  - title: Powered by Nuxt UI Components
-    description: Access the complete Nuxt UI component library with 100+ beautifully styled, accessible, and customizable Vue components. Everything you need to build professional SaaS applications.
+  - title: Powered by BLACK WOKE OPEN SOURCE TECHNOLOGIES
+    description: Xamayca technologies aims to honor uplift and advance BLACK MINDS,WOKE IDEOLOGIES, and OPEN SOURCE TECHNOLOGIES. Despite the attack on these things we believe that now is the time to defend them even more proudly and fiercely. Using technologies like Babylonjs, Blender, Vuejs, Python and many more we aim to build spaces where these communities can be sheltered and so they may flourish.
     id: features
     orientation: horizontal
     features:
