@@ -5,13 +5,13 @@ XT Platform API (`/api/v1`) — surfaces: "API Frontend" and "API Frontend B2B2C
 
 | # | Deliverable | Status |
 |---|---|---|
-| 01 | [Backend endpoint inventory](01-backend-endpoints.md) | pending |
-| 02 | [Frontend endpoint inventory](02-frontend-endpoints.md) | pending |
-| 03 | [Config & hosting analysis](03-config-hosting.md) | pending |
-| 04 | [Auth gap analysis](04-auth-gap.md) | pending |
-| 05 | [Endpoint gap matrix](05-endpoint-gap-matrix.md) | pending |
-| 06 | [Surface mapping (frontend vs B2B2C)](06-surface-mapping.md) | pending |
-| 07 | [Refactor plan draft](07-refactor-plan-draft.md) | pending |
+| 01 | [Backend endpoint inventory](01-backend-endpoints.md) | done |
+| 02 | [Frontend endpoint inventory](02-frontend-endpoints.md) | done |
+| 03 | [Config & hosting analysis](03-config-hosting.md) | done |
+| 04 | [Auth gap analysis](04-auth-gap.md) | done |
+| 05 | [Endpoint gap matrix](05-endpoint-gap-matrix.md) | done |
+| 06 | [Surface mapping (frontend vs B2B2C)](06-surface-mapping.md) | done |
+| 07 | [Refactor plan draft](07-refactor-plan-draft.md) | done — 7 open decisions pending (see §2 of 07) |
 
 Rules: no services started; xt-plat route source = source of truth over docs;
 every endpoint claim cites `file:line`.
