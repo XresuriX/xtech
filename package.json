@@ -19,6 +19,7 @@
     "build:ssr": "quasar build -m ssr",
     "build:pwa": "quasar build -m pwa",
     "lint": "eslint --ext .js,.ts,.vue ./",
+    "typecheck": "vue-tsc --noEmit",
     "format": "prettier --write \"**/*.{js,ts,vue,scss,html,md,json}\" --ignore-path .gitignore",
     "test": "vitest",
     "test:run": "vitest run",

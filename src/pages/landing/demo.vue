@@ -45,21 +45,23 @@ const audioPlaylist = [
   },
 ];
 
-const hlsBaseUrl = ref('https://xrcomms.xamaycatechnologies.cloud:8888');
-const moqBaseUrl = ref('https://relay.example.com/anon');
+const hlsBaseUrl = ref(
+  process.env.APP_HLS_BASE_URL || 'https://xrcomms.xamaycatechnologies.cloud:8888'
+);
+const moqBaseUrl = ref(
+  process.env.APP_MOQ_BASE_URL || 'https://relay.example.com/anon'
+);
 
 const hlsRoomName = ref('test');
 const moqRoomName = ref('alice');
 
-const hlsStreamUrl = computed(() => {
-  return import.meta.env.VITE_HLS_URL?.replace('{room}', hlsRoomName.value) 
-    || `${hlsBaseUrl.value}/${hlsRoomName.value}.m3u8`;
-});
+const hlsStreamUrl = computed(
+  () => `${hlsBaseUrl.value}/${hlsRoomName.value}.m3u8`
+);
 
-const moqStreamUrl = computed(() => {
-  return import.meta.env.VITE_MOQ_URL?.replace('{room}', moqRoomName.value)
-    || `${moqBaseUrl.value}?name=${moqRoomName.value}`;
-});
+const moqStreamUrl = computed(
+  () => `${moqBaseUrl.value}?name=${moqRoomName.value}`
+);
 
 const audioStreamUrl = ref('');
 

@@ -59,18 +59,27 @@ Rules editor, Tasks manager, Campaigns manager, Broadcast notifications (22 endp
 ## Phase 7 — Tests & CI
 1. HTTP layer tests: `vi.mock` axios or add msw; cover service modules + error mapping (currently 1 sample test, `src/sample.test.ts`).
 2. Auth flow tests (OIDC mock), guard tests.
-3. `pnpm lint` + new `typecheck` + `test:run` in CI.
+3. `pnpm lint` + `typecheck` + `test:run` in CI.
+4. **Typecheck debt:** `pnpm typecheck` script added in Phase 1; baseline = **66 pre-existing errors / 37 files** (2026-10-12, never ran before). Fix before enabling CI gate; many files are rewritten or deleted in Phases 2–6 (login/useAuth/settings/permission pages), so re-baseline after Phase 6. Top clusters: `BabylonBasicScene.vue` (10), `AudioPlayer.vue` (7), MetaTagOptions string-vs-record (9 landing pages), `chats/*` (7), `src-ssr/*` (3).
 
 ---
 
 ## Open decisions (must answer before Phase 1/2)
 
+**Decided 2026-10-12 (user):**
+
+| # | Decision | Resolution |
+|---|---|---|
+| 1 | Auth integration | **A — SPA OIDC code+PKCE against Zitadel** |
+| 2 | Cross-origin strategy | **dev proxy (`quasar.config.ts`) + same-origin prod (Traefik `/api/*`,`/ws/*`)** |
+| 7 | `MISSING-BACKEND` items (file upload, FCM, search, OG-meta) | **cut scope** — delete/stub, revisit if backend adds them |
+| — | Branching | work on `feat/api-refactor`, phase-by-phase commits |
+
+**Still open:**
+
 | # | Decision | Options | Recommendation |
 |---|---|---|---|
-| 1 | Auth integration | **(A)** SPA OIDC code+PKCE vs **(B)** BFF vs (C) backend auth endpoints | **A** (C rejected — contradicts `ARCHITECTURE.md`) |
-| 2 | Cross-origin strategy | **(a)** same-origin Traefik proxy vs (b) add CORS to xt-plat vs (c) dev proxy only | **a + c** (`03` §3) |
 | 3 | Starter features (39 `DROP` rows) | delete pages/code vs leave unrouted | delete nav refs now, delete pages in cleanup pass |
 | 4 | Contact form backend | new xt-plat endpoint vs Supabase vs `mailto:` | decide in Phase 1 |
 | 5 | Blog backend | Supabase vs xt-plat vs static | decide in Phase 4 |
 | 6 | Routes to restore | minimum: `/auth`, `/error*`, members; dashboard optional | minimum first |
-| 7 | `MISSING-BACKEND` items (file upload, FCM, search, OG-meta) | build backend support vs cut scope | cut scope initially |

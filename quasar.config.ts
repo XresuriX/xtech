@@ -129,7 +129,21 @@ export default defineConfig((ctx) => {
     devServer: {
       // https: true,
       port: 9000,
-      open: false // opens browser window automatically
+      open: false, // opens browser window automatically
+      // Same-origin proxy to xt-plat (docs/api-audit/03-config-hosting.md §3).
+      // APP_BASE_API is empty in env/.env.dev, so all /api + /ws calls hit this proxy.
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+          ws: true
+        },
+        '/ws': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+          ws: true
+        }
+      }
     },
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#framework

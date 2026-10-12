@@ -30,6 +30,8 @@ const activeTab = ref<'overview' | 'analytics' | 'reports' | 'publish'>('overvie
 
 const publishType = ref<'audio' | 'video' | 'both'>('video');
 const streamUrl = ref('');
+const defaultStreamUrl =
+  process.env.APP_HLS_BASE_URL || 'https://xrcomms.xamaycatechnologies.cloud:8888';
 const streamName = ref('');
 const isPublishing = ref(false);
 const publishStatus = ref<'idle' | 'connecting' | 'publishing' | 'live' | 'error'>('idle');
@@ -60,19 +62,19 @@ const stopPublish = () => {
 };
 
 const testAudioStream = () => {
-  streamUrl.value = 'https://xrcomms.xamaycatechnologies.cloud:8888';
+  streamUrl.value = defaultStreamUrl;
   streamName.value = 'audio-test';
   publishType.value = 'audio';
 };
 
 const testVideoStream = () => {
-  streamUrl.value = 'https://xrcomms.xamaycatechnologies.cloud:8888';
+  streamUrl.value = defaultStreamUrl;
   streamName.value = 'video-test';
   publishType.value = 'video';
 };
 
 const testBothStream = () => {
-  streamUrl.value = 'https://xrcomms.xamaycatechnologies.cloud:8888';
+  streamUrl.value = defaultStreamUrl;
   streamName.value = 'av-test';
   publishType.value = 'both';
 };
@@ -246,7 +248,7 @@ const testBothStream = () => {
                 outlined
                 dense
                 class="q-mb-md"
-                placeholder="https://xrcomms.xamaycatechnologies.cloud:8888"
+                :placeholder="defaultStreamUrl"
               >
                 <template #prepend>
                   <q-icon name="cloud" />
