@@ -1,4 +1,11 @@
 :root {
+    // Ardenne-inspired colors
+    --arden-blue: #1e3a8a;
+    --arden-blue-light: #3b5998;
+    --arden-gold: #f59e0b;
+    --arden-gold-light: #fbbf24;
+    --arden-green: #10b981;
+    --arden-green-light: #34d399;
 
     --color-primary-50: #f0f9fe;
     --color-primary-100: #ddf0fc;
@@ -280,10 +287,15 @@ $blue-grey-800: oklch(0.279 0.041 260.031);
 $blue-grey-900: oklch(0.208 0.042 265.755);
 $blue-grey-950: oklch(0.129 0.042 264.695);
 
-$primary: $blue;
-$positive: #23d160;
-$negative: #ff3860;
-$warning: #ff9f43;
+// Ardenne High School colors - Blue and Gold with Green tertiary
+$primary: #1e3a8a;    // Deep blue (Ardenne blue)
+$secondary: #f59e0b;  // Gold (Ardenne gold)
+$accent: #10b981;     // Green (tertiary)
+
+$positive: #10b981;
+$negative: #ef4444;
+$warning: #f59e0b;
+$info: #1e3a8a;
 
 // used by dark mode
 // $dark: #272a32 !default;;

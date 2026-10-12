@@ -1,122 +1,83 @@
+<script setup lang="ts">
+/**
+ * Main Application Entry Component
+ *
+ * Root Vue component for XTech landing page application.
+ *
+ * @app
+ * @accessibility
+ * - Provides proper lang attribute for screen readers
+ * - Sets up global keyboard shortcuts
+ */
+
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { logger } from '@/utils/logger';
+import FirstVisitWelcome from '@/components/landing/FirstVisitWelcome.vue';
+
+const router = useRouter();
+
+/** Show first visit welcome */
+const showWelcome = ref(false);
+
+/** Check if first visit */
+const checkFirstVisit = () => {
+  // In dev mode, always show welcome
+  if (import.meta.env.DEV) {
+    // Check if already dismissed
+    const dismissed = sessionStorage.getItem('xtech_welcome_dismissed');
+    if (!dismissed) {
+      showWelcome.value = true;
+    }
+    return;
+  }
+
+  // In production, check localStorage
+  const hasVisited = localStorage.getItem('xtech_first_visit_shown');
+  if (!hasVisited) {
+    showWelcome.value = true;
+  }
+};
+
+/**
+ * Handle welcome close
+ */
+const handleWelcomeClose = () => {
+  showWelcome.value = false;
+  sessionStorage.setItem('xtech_welcome_dismissed', 'true');
+};
+
+/**
+ * Handle navigation from welcome
+ */
+const handleWelcomeNavigate = (path: string) => {
+  showWelcome.value = false;
+  sessionStorage.setItem('xtech_welcome_dismissed', 'true');
+  router.push(path);
+};
+
+/**
+ * Handle skip from welcome
+ */
+const handleWelcomeSkip = () => {
+  showWelcome.value = false;
+  sessionStorage.setItem('xtech_welcome_dismissed', 'true');
+};
+
+onMounted(() => {
+  logger.info('XTech Landing Page initialized');
+  checkFirstVisit();
+});
+</script>
+
 <template>
   <router-view />
+
+  <!-- First Visit Welcome Modal -->
+  <FirstVisitWelcome
+    :show="showWelcome"
+    @close="handleWelcomeClose"
+    @navigate="handleWelcomeNavigate"
+    @skip="handleWelcomeSkip"
+  />
 </template>
-
-<script setup lang="ts">
-import { useBase } from '@/composables/useBase';
-import { usePreFetch } from '@/composables/usePreFetch';
-import { useRequiredAuth } from '@/composables/useRequiredAuth';
-import { AppAuthTokenKey, AUTH_NO_FILTER } from '@/libs/constant';
-import { appNavs } from '@/libs/navs';
-import { useAppStore } from '@/stores/appStore';
-import { useExceptionStore } from '@/stores/exceptionStore';
-import { detroyAuthCookie, isAppException } from '@/utils/appUtil';
-import { Cookies } from 'quasar';
-import { useDevice } from 'src/composables/useDevice';
-import { useAuthenStore } from 'stores/authenStore';
-import { onBeforeUnmount, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useLang } from './composables/useLang';
-import { useTheme } from './composables/useTheme';
-import { userData } from './libs/data';
-
-defineOptions({
-  async preFetch({ currentRoute, ssrContext, redirect }) {
-    const cookies = process.env.SERVER ? Cookies.parseSSR(ssrContext) : Cookies;
-    const authenStore = useAuthenStore();
-    const appStore = useAppStore();
-    const { callAxiosProcess } = usePreFetch(ssrContext, redirect);
-    if (
-      !AUTH_NO_FILTER.find((t) => t == currentRoute.path) &&
-      cookies &&
-      cookies.get(AppAuthTokenKey) &&
-      !authenStore.auth
-    ) {
-      /* TODO You need to work with your API, you can use my Java Springboot from the link https://github.com/bekaku/java-spring-boot-starter
-      const refreshTokenReponse = await authenStore.refreshToken(ssrContext);
-      if (refreshTokenReponse && !refreshTokenReponse.status && refreshTokenReponse.fourceLogout) {
-        redirect({ path: '/auth/login' });
-      }
-      const userDataResponse = await callAxiosProcess<UserDto>({
-        API: '/api/appUser/currentUserData',
-        method: 'GET',
-      });
-      */
-
-      const userDataResponse: any = {
-        status: 200,
-        statusText: 'OK',
-        data: userData,
-      };
-      if (
-        userDataResponse &&
-        userDataResponse.status &&
-        userDataResponse.status === 200 &&
-        userDataResponse.data &&
-        !isAppException(userDataResponse.data)
-      ) {
-        const userData = userDataResponse.data;
-        authenStore.setAuthen(userData);
-
-        if (userDataResponse.data?.permissions && userDataResponse.data.permissions.length > 0) {
-          appStore.setPermissions(userDataResponse.data.permissions);
-        }
-        const backendDrawer = await appStore.initialAppNav(appNavs);
-        appStore.setDrawers(backendDrawer);
-      } else if (userDataResponse && userDataResponse.status && userDataResponse.status == 403) {
-        detroyAuthCookie(cookies);
-        redirect({ path: '/auth/login' });
-      } else {
-        redirect(`/error?code=${userDataResponse.status}`);
-      }
-    }
-  },
-});
-
-const { appNavigateTo, isDevMode } = useBase();
-const exceptionStore = useExceptionStore();
-const router = useRouter();
-const authenStore = useAuthenStore();
-const { initialQuasarDark } = useTheme();
-const { initialLocale } = useLang();
-const { initialDevice } = useDevice();
-// AppSetup();
-initialQuasarDark();
-initialLocale();
-useRequiredAuth();
-onMounted(() => {
-  initialDevice();
-
-  if (exceptionStore.error && exceptionStore.error.status && exceptionStore.error.message) {
-    appNavigateTo('/error', true);
-  }
-  if (authenStore.auth) {
-    if (isDevMode()) {
-      console.log('App.vue > authenStore >', authenStore.auth);
-    }
-    // authenStore.startRefreshTokenTimer();
-  }
-  window.onpopstate = () => {
-    if (router.options.history.state.forward == '/auth/login' && !authenStore.auth) {
-      window.history.forward();
-    }
-    // if (
-    //   authenStore.auth !== undefined &&
-    //   this.$route.path == '/login'
-    // ) {
-    //   this.$router.push('/');
-    // }
-    // if (authenStore.auth === undefined) {
-    //   appNavigateTo('/auth/login', true);
-    // }
-  };
-});
-
-
-// watch(authenStore, (state) => {
-//   if (state && state.sessionExpired) {
-//     appNavigateTo('/auth/login', true);
-//   }
-// });
-onBeforeUnmount(() => {});
-</script>
