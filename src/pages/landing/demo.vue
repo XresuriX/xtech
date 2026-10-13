@@ -81,7 +81,8 @@ const handleAudioError = (error: Error, track: any) => {
 };
 
 const addStreamToPlaylist = () => {
-  if (!audioStreamUrl.value) return;
+  if (!audioStreamUrl.value) 
+return;
   const url = audioStreamUrl.value;
   const name = url.split('/').pop() || 'Stream';
   audioPlaylist.push({

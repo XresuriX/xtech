@@ -10,7 +10,7 @@
             v-model="entity.mobilePhone"
             :label="t('base.phoneEdit')"
           >
-            <template v-if="!phoneValid" v-slot:hint>
+            <template v-if="!phoneValid" #hint>
               <span class="text-negative">
                 {{ t('error.validatePhone') }}
               </span>
@@ -40,11 +40,11 @@
 </template>
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { UserPersonalEditRequest } from '@/types/models';
+import type { UserPersonalEditRequest } from '@/types/models';
 import UserService from '@/api/UserService';
 import { useLang } from '@/composables/useLang';
 import { biPencil } from '@quasar/extras/bootstrap-icons';
-import { CountryCode, Country } from '@/types/common';
+import type { CountryCode, Country } from '@/types/common';
 import { isValidPhoneNumber } from 'libphonenumber-js';
 const { t } = useLang();
 const { updatePersonalData } = UserService();
@@ -52,7 +52,7 @@ const countryCode = ref<CountryCode>('TH');
 const entity = ref<UserPersonalEditRequest>({
   mobilePhone: '',
 });
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// eslint-disable-next-line ts/no-unused-vars
 const countryList = ref<Country[]>([
   {
     code: 'TH',

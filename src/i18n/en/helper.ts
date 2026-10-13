@@ -14,7 +14,7 @@ export default {
     'helper': {
         'loginToSystem': 'Welcome back, please login to your {0} account.',
         'confirmDeleteText': 'Once deleted, you will not be able to recover this data!',
-        'textRequire': "Sign <span class='text-danger'>*</span> Required fields can not be empty.",
+        'textRequire': 'Sign <span class=\'text-danger\'>*</span> Required fields can not be empty.',
         'generatedPermission': 'Go To apppermissionlist to create CRUD Permission {0}',
         'loginMainTitle': 'Welcome to {0} system.',
         'logoutConfirm': 'Confirm sign out?',

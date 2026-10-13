@@ -13,8 +13,8 @@ export default {
     },
     'helper': {
         'loginToSystem': 'ยินดีต้อนรับ, เข้าสู่ระบบ {0}',
-        'confirmSeleteText': "ท่านแน่ใจที่จะลบข้อมูลนี้หรือไม่ กด 'ตกลง' เพื่อดำเนินการ",
-        'textTequire': "เครื่องหมาย <span class='text-danger'>*</span> จำเป็นต้องกรอกไม่สามารถเว้นว่างได้",
+        'confirmSeleteText': 'ท่านแน่ใจที่จะลบข้อมูลนี้หรือไม่ กด \'ตกลง\' เพื่อดำเนินการ',
+        'textTequire': 'เครื่องหมาย <span class=\'text-danger\'>*</span> จำเป็นต้องกรอกไม่สามารถเว้นว่างได้',
         'generatedPermission': 'ไปที่ url apppermissionlist เพื่อสร้าง CRUD Permission ชื่อ {0}',
         'loginMainTitle': 'ระบบซอฟต์แวร์บริหารจัดการการศึกษาสำหรับสถานศึกษาด้านอาชีวศึกษา {0}',
         'logoutConfirm': 'ยืนยันการออกจากระบบ?',

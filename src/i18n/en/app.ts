@@ -107,7 +107,7 @@ export default {
     'followingTag': 'Following hashtags',
     'recommendationsThemes': 'Recommendations themes',
     'hastagTrend': 'Hashtag Trends',
-    'todayMostViewPosts': "Today's most views posts",
+    'todayMostViewPosts': 'Today\'s most views posts',
     'ssAction': {
         'loveIt': 'Love it',
         'prizeIt': 'Prize it',

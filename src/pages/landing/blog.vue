@@ -98,7 +98,8 @@ const allTags = computed(() => {
  * Filtered posts
  */
 const filteredPosts = computed(() => {
-  if (!selectedTag.value) return posts.value;
+  if (!selectedTag.value) 
+return posts.value;
   return posts.value.filter(post => post.tags?.includes(selectedTag.value!));
 });
 

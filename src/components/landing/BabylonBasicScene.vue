@@ -73,7 +73,8 @@ const isAnimating = ref(true);
  * Initialize the BabylonJS scene
  */
 const initScene = () => {
-  if (!canvasRef.value) return;
+  if (!canvasRef.value) 
+return;
 
   // Create engine
   engine.value = new BABYLON.Engine(canvasRef.value, true, {
@@ -234,7 +235,8 @@ const toggleAnimation = () => {
  * Toggle audio playback
  */
 const toggleAudio = () => {
-  if (!audioRef.value) return;
+  if (!audioRef.value) 
+return;
 
   if (isAudioPlaying.value) {
     audioRef.value.pause();

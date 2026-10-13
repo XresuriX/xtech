@@ -77,21 +77,21 @@ export const useValidation = () => {
     }
 
     // Check for mixed case
-    if (password.match(/[a-z]/) && password.match(/[A-Z]/)) {
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) {
       strength += 1;
     } else {
       tips += 'Use both lowercase and uppercase letters. ';
     }
 
     // Check for numbers
-    if (password.match(/\d/)) {
+    if (/\d/.test(password)) {
       strength += 1;
     } else {
       tips += 'Include at least one number. ';
     }
 
     // Check for special characters
-    if (password.match(/[^a-z\d]/i)) {
+    if (/[^a-z\d]/i.test(password)) {
       strength += 1;
     } else {
       // eslint-disable-next-line unused-imports/no-unused-vars

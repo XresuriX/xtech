@@ -68,7 +68,8 @@ const tourSteps = [
  * @returns {boolean} True if first visit
  */
 const checkFirstVisit = (): boolean => {
-  if (import.meta.env.DEV) return true; // Always show in dev mode
+  if (import.meta.env.DEV) 
+return true; // Always show in dev mode
 
   const hasVisited = localStorage.getItem('xtech_first_visit_shown');
   return !hasVisited;
@@ -105,7 +106,8 @@ const handleClose = () => {
  * Handle keyboard events
  */
 const handleKeydown = (event: KeyboardEvent) => {
-  if (!props.show) return;
+  if (!props.show) 
+return;
 
   if (event.key === 'Escape') {
     handleClose();
@@ -151,7 +153,7 @@ const currentStepData = tourSteps[currentStep.value];
         <div
           ref="modalRef"
           class="welcome-modal"
-          :class="{ 'animating': isAnimating }"
+          :class="{ animating: isAnimating }"
           @keydown="handleKeydown"
         >
 

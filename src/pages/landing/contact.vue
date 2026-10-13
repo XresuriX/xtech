@@ -55,7 +55,7 @@ const nameRules = [
 
 const emailRules = [
   (val: string) => !!val || 'Email is required',
-  (val: string) => /.+@.+\..+/.test(val) || 'Please enter a valid email',
+  (val: string) => /.[^\n\r@\u2028\u2029]*@.+\..+/.test(val) || 'Please enter a valid email',
 ];
 
 const messageRules = [
@@ -68,7 +68,7 @@ const messageRules = [
  */
 const isFormValid = computed(() => {
   return form.value.name.length >= 2 &&
-    /.+@.+\..+/.test(form.value.email) &&
+    /.[^\n\r@\u2028\u2029]*@.+\..+/.test(form.value.email) &&
     form.value.message.length >= 10;
 });
 

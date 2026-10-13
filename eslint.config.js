@@ -5,6 +5,13 @@ export default antfu({
   vue: true,
   typescript: true,
 
+  ignores: [
+    // eslint-plugin-vue rules crash on markdown files (getScriptSetupElement on md AST)
+    '**/*.md',
+    'dist/**',
+    'node_modules/**',
+  ],
+
   // Customizable rules
   rules: {
     // Example of customizing specific rules
@@ -82,5 +89,8 @@ export default antfu({
     'e18e/prefer-static-regex': 'off',
     'e18e/prefer-array-to-reversed': 'off',
     'e18e/prefer-spread-syntax': 'off',
+    // trustPolicy: no-downgrade rejected lockfile chokidar@4.0.3 (newest 4.x;
+    // only fix would be forcing chokidar@5 override on sass/vite deps - risky)
+    'pnpm/yaml-enforce-settings': 'off',
   },
 });

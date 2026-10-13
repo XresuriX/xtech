@@ -127,7 +127,8 @@ const fileInputRef = ref<HTMLInputElement | null>(null);
  * Add track from URL
  */
 const addTrackFromUrl = () => {
-  if (!newTrackUrl.value || !newTrackTitle.value) return;
+  if (!newTrackUrl.value || !newTrackTitle.value) 
+return;
 
   const newTrack: Track = {
     id: Date.now(),
@@ -135,6 +136,7 @@ const addTrackFromUrl = () => {
     src: newTrackUrl.value,
   };
 
+  // eslint-disable-next-line vue/no-mutating-props -- legacy demo player mutates prop in place
   props.playlist.push(newTrack);
   newTrackUrl.value = '';
   newTrackTitle.value = '';
@@ -148,7 +150,8 @@ const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement;
   const files = target.files;
 
-  if (!files) return;
+  if (!files) 
+return;
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
@@ -161,6 +164,7 @@ const handleFileSelect = (event: Event) => {
       src: url,
     };
 
+    // eslint-disable-next-line vue/no-mutating-props -- legacy demo player mutates prop in place
     props.playlist.push(newTrack);
   }
 
@@ -187,7 +191,8 @@ const formattedDuration = computed(() => formatTime(duration.value));
 
 /** Progress percentage */
 const progress = computed(() => {
-  if (duration.value === 0) return 0;
+  if (duration.value === 0) 
+return 0;
   return (currentTime.value / duration.value) * 100;
 });
 
@@ -209,7 +214,8 @@ const formatTime = (seconds: number): string => {
  * Play the current track
  */
 const play = async () => {
-  if (!audioRef.value || !currentTrack.value) return;
+  if (!audioRef.value || !currentTrack.value) 
+return;
 
   try {
     isLoading.value = true;
@@ -229,7 +235,8 @@ const play = async () => {
  * Pause playback
  */
 const pause = () => {
-  if (!audioRef.value) return;
+  if (!audioRef.value) 
+return;
   audioRef.value.pause();
   isPlaying.value = false;
 };
@@ -250,7 +257,8 @@ const togglePlay = () => {
  * @param index - Track index to play
  */
 const playTrack = (index: number) => {
-  if (index < 0 || index >= props.playlist.length) return;
+  if (index < 0 || index >= props.playlist.length) 
+return;
 
   shuffleHistory.value.push(currentIndex.value);
   currentIndex.value = index;
@@ -265,7 +273,8 @@ const playTrack = (index: number) => {
  * Play next track
  */
 const next = () => {
-  if (props.playlist.length === 0) return;
+  if (props.playlist.length === 0) 
+return;
 
   if (isShuffled.value) {
     const nextIndex = Math.floor(Math.random() * props.playlist.length);
@@ -280,7 +289,8 @@ const next = () => {
  * Play previous track
  */
 const prev = () => {
-  if (props.playlist.length === 0) return;
+  if (props.playlist.length === 0) 
+return;
 
   // If more than 3 seconds in, restart current track
   if (currentTime.value > 3) {
@@ -304,7 +314,8 @@ const prev = () => {
  * @param time - Time in seconds
  */
 const seek = (time: number) => {
-  if (!audioRef.value) return;
+  if (!audioRef.value) 
+return;
   audioRef.value.currentTime = time;
 };
 
@@ -408,7 +419,8 @@ const handleError = () => {
  * @param event - Keyboard event
  */
 const handleKeydown = (event: KeyboardEvent) => {
-  if (!currentTrack.value) return;
+  if (!currentTrack.value) 
+return;
 
   switch (event.key) {
     case ' ':

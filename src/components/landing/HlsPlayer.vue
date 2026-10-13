@@ -99,7 +99,8 @@ const hasError = ref(false);
 
 /** Progress percentage */
 const progress = computed(() => {
-  if (duration.value === 0) return 0;
+  if (duration.value === 0) 
+return 0;
   return (currentTime.value / duration.value) * 100;
 });
 
@@ -113,7 +114,9 @@ const formattedDuration = computed(() => formatTime(duration.value));
  * Format seconds to MM:SS
  */
 const formatTime = (seconds: number): string => {
-  if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
+  if (Number.isNaN(seconds) || !Number.isFinite(seconds)) {
+    return '0:00';
+  }
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -123,7 +126,8 @@ const formatTime = (seconds: number): string => {
  * Initialize HLS.js
  */
 const initHls = () => {
-  if (!videoRef.value || !props.src) return;
+  if (!videoRef.value || !props.src) 
+return;
 
   isLoading.value = true;
 
@@ -174,7 +178,8 @@ const initHls = () => {
  * Update available qualities
  */
 const updateQualities = () => {
-  if (!hls.value) return;
+  if (!hls.value) 
+return;
 
   const levels = hls.value.levels;
   qualities.value = levels.map((level, index) => ({
@@ -203,7 +208,8 @@ const setSource = (src: string) => {
  * Play video
  */
 const play = async () => {
-  if (!videoRef.value) return;
+  if (!videoRef.value) 
+return;
 
   try {
     await videoRef.value.play();
@@ -218,7 +224,8 @@ const play = async () => {
  * Pause video
  */
 const pause = () => {
-  if (!videoRef.value) return;
+  if (!videoRef.value) 
+return;
   videoRef.value.pause();
   isPlaying.value = false;
   emit('pause');
@@ -239,7 +246,8 @@ const togglePlay = () => {
  * Seek to time
  */
 const seek = (time: number) => {
-  if (!videoRef.value) return;
+  if (!videoRef.value) 
+return;
   videoRef.value.currentTime = time;
 };
 
@@ -280,7 +288,8 @@ const handleVolumeChange = (newVolume: number) => {
  */
 const toggleFullscreen = async () => {
   const container = videoRef.value?.parentElement;
-  if (!container) return;
+  if (!container) 
+return;
 
   try {
     if (!document.fullscreenElement) {
@@ -299,7 +308,8 @@ const toggleFullscreen = async () => {
  * Change quality
  */
 const changeQuality = (index: number) => {
-  if (!hls.value) return;
+  if (!hls.value) 
+return;
   hls.value.currentLevel = index;
 };
 
@@ -307,7 +317,8 @@ const changeQuality = (index: number) => {
  * Toggle picture-in-picture
  */
 const togglePiP = async () => {
-  if (!videoRef.value) return;
+  if (!videoRef.value) 
+return;
 
   try {
     if (document.pictureInPictureElement) {
@@ -582,6 +593,7 @@ onUnmounted(() => {
     </div>
 
     <!-- URL Input -->
+    <!-- eslint-disable vue/no-mutating-props -- legacy demo player binds v-model to prop in place -->
     <div class="url-input-section q-pa-sm bg-grey-9">
       <q-input
         v-model="props.src"
@@ -604,6 +616,7 @@ onUnmounted(() => {
         </template>
       </q-input>
     </div>
+    <!-- eslint-enable vue/no-mutating-props -->
   </div>
 </template>
 

@@ -92,7 +92,8 @@ const latency = ref(0);
 
 /** Progress percentage */
 const progress = computed(() => {
-  if (duration.value === 0) return 0;
+  if (duration.value === 0) 
+return 0;
   return (currentTime.value / duration.value) * 100;
 });
 
@@ -106,7 +107,9 @@ const formattedDuration = computed(() => formatTime(duration.value));
  * Format seconds to MM:SS
  */
 const formatTime = (seconds: number): string => {
-  if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
+  if (Number.isNaN(seconds) || !Number.isFinite(seconds)) {
+    return '0:00';
+  }
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -118,6 +121,7 @@ const formatTime = (seconds: number): string => {
 const connect = async () => {
   if (!props.src && isDemoMode.value) {
     // Use demo stream
+    // eslint-disable-next-line vue/no-mutating-props -- legacy demo player mutates prop in place
     props.src = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
   }
 
@@ -164,7 +168,8 @@ const disconnect = () => {
  * Play video
  */
 const play = async () => {
-  if (!videoRef.value) return;
+  if (!videoRef.value) 
+return;
 
   try {
     await videoRef.value.play();
@@ -179,7 +184,8 @@ const play = async () => {
  * Pause video
  */
 const pause = () => {
-  if (!videoRef.value) return;
+  if (!videoRef.value) 
+return;
   videoRef.value.pause();
   isPlaying.value = false;
   emit('pause');
@@ -200,7 +206,8 @@ const togglePlay = () => {
  * Seek to time
  */
 const seek = (time: number) => {
-  if (!videoRef.value) return;
+  if (!videoRef.value) 
+return;
   videoRef.value.currentTime = time;
 };
 
@@ -241,7 +248,8 @@ const handleVolumeChange = (newVolume: number) => {
  */
 const toggleFullscreen = async () => {
   const container = videoRef.value?.parentElement;
-  if (!container) return;
+  if (!container) 
+return;
 
   try {
     if (!document.fullscreenElement) {
@@ -547,6 +555,7 @@ onMounted(() => {
     </div>
 
     <!-- Stream URL Input -->
+    <!-- eslint-disable vue/no-mutating-props -- legacy demo player binds v-model to prop in place -->
     <div class="url-input-section q-pa-sm bg-grey-9">
       <div class="row q-col-gutter-sm items-center no-wrap">
         <div class="col">
@@ -573,6 +582,7 @@ onMounted(() => {
         Demo mode: Uses HLS stream as fallback
       </div>
     </div>
+    <!-- eslint-enable vue/no-mutating-props -->
   </div>
 </template>
 

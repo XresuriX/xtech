@@ -9,9 +9,12 @@
  * Make sure to yarn add / npm install (in your project root)
  * anything you import here (except for express and compression).
  */
-import { Server } from 'node:http';
+import type { Server } from 'node:http';
 import compression from 'compression';
+/* eslint-disable ts/consistent-type-imports -- keep a single express import: splitting
+   type/value imports doubles the unresolved-module TS errors (express types are not installed) */
 import express, { Application, Request, Response } from 'express';
+/* eslint-enable ts/consistent-type-imports */
 import {
   defineSsrCreate,
   defineSsrInjectDevMiddleware,
