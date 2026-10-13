@@ -2,12 +2,17 @@
 /**
  * Admin Dashboard Page
  *
- * Unprotected admin dashboard with analytics and media publishing capabilities.
+ * Demo overview tabs + real catalogue publishing (xt-plat /api/v1/catalogue).
  */
 
-import { ref, computed } from 'vue';
-import { useMeta } from 'quasar';
+import { computed, onMounted, ref } from 'vue';
+import { date, useMeta } from 'quasar';
 import { biCode, biMusicNote } from '@quasar/extras/bootstrap-icons';
+import ActivityService from 'src/api/ActivityService';
+import type { ActivityOut } from 'src/api/ActivityService';
+import CatalogueService from 'src/api/CatalogueService';
+import type { StreamCreateOut, SyncTokenOut, TelemetryOut } from 'src/api/CatalogueService';
+import { useBase } from 'src/composables/useBase';
 import BaseButton from 'src/components/base/BaseButton.vue';
 import BaseCard from 'src/components/base/BaseCard.vue';
 import BaseTabs from 'src/components/base/BaseTabs.vue';
@@ -15,69 +20,104 @@ import ChartArea from 'src/components/chart/ChartArea.vue';
 import ChartSparklines from 'src/components/chart/ChartSparklines.vue';
 import {
   dashBaordRecentSalseItems,
-  dashBaordStatisticItems,
   dashboardChartData,
   dashboardHeroItems,
   dashboardSparkLineItems,
 } from 'src/libs/data';
-import type { LabelValue } from 'src/types/common';
 
 useMeta({
   title: 'Admin Dashboard',
 });
 
+const { appConfirm, appLoading } = useBase();
+const catalogue = CatalogueService();
+const activityApi = ActivityService();
+
 const activeTab = ref<'overview' | 'analytics' | 'reports' | 'publish'>('overview');
 
-const publishType = ref<'audio' | 'video' | 'both'>('video');
-const streamUrl = ref('');
-const defaultStreamUrl =
-  process.env.APP_HLS_BASE_URL || 'https://xrcomms.xamaycatechnologies.cloud:8888';
-const streamName = ref('');
-const isPublishing = ref(false);
-const publishStatus = ref<'idle' | 'connecting' | 'publishing' | 'live' | 'error'>('idle');
+// --- real catalogue state ---
+const streams = ref<StreamCreateOut[]>([]);
+const streamsLoading = ref(false);
+const activities = ref<ActivityOut[]>([]);
+const createForm = ref({ title: '', description: '', enable_recording: true });
+const creating = ref(false);
+const dialogSync = ref(false);
+const syncTokenData = ref<SyncTokenOut | null>(null);
+const dialogTelemetry = ref(false);
+const telemetryData = ref<TelemetryOut | null>(null);
+const telemetryLoading = ref(false);
 
-const publishUrl = computed(() => {
-  if (!streamUrl.value) return '';
-  const base = streamUrl.value.endsWith('/') ? streamUrl.value : streamUrl.value + '/';
-  return `${base}${streamName.value || 'stream'}`;
+const loadStreams = async (): Promise<void> => {
+  streamsLoading.value = true;
+  const res = await catalogue.list({ limit: 50 });
+  streams.value = res ?? [];
+  streamsLoading.value = false;
+};
+
+const loadActivities = async (): Promise<void> => {
+  const res = await activityApi.list({ limit: 10 });
+  activities.value = res ?? [];
+};
+
+const activityRows = computed(() =>
+  activities.value.length > 0
+    ? activities.value.map((item) => ({
+        label: item.description || `${item.verb} (${item.actor_display})`,
+        value: date.formatDate(item.emitted_at, 'YYYY-MM-DD HH:mm'),
+      }))
+    : dashBaordRecentSalseItems
+);
+
+const onCreateStream = async (): Promise<void> => {
+  if (!createForm.value.title) 
+return;
+  creating.value = true;
+  appLoading(true);
+  const res = await catalogue.create({
+    title: createForm.value.title,
+    description: createForm.value.description,
+    enable_recording: createForm.value.enable_recording,
+  });
+  appLoading(false);
+  creating.value = false;
+  if (res) {
+    createForm.value = { title: '', description: '', enable_recording: true };
+    await loadStreams();
+  }
+};
+
+const hlsUrl = (stream: StreamCreateOut): string =>
+  stream.playback?.hls_url || stream.playback_url || '';
+
+const onDeleteStream = async (stream: StreamCreateOut): Promise<void> => {
+  const conf = await appConfirm('Delete stream', `Delete "${stream.title}"?`);
+  if (!conf) 
+return;
+  appLoading(true);
+  await catalogue.remove(stream.id);
+  appLoading(false);
+  await loadStreams();
+};
+
+const onSyncToken = async (stream: StreamCreateOut): Promise<void> => {
+  appLoading(true);
+  syncTokenData.value = await catalogue.syncToken(stream.id);
+  appLoading(false);
+  dialogSync.value = syncTokenData.value != null;
+};
+
+const onTelemetry = async (stream: StreamCreateOut): Promise<void> => {
+  telemetryData.value = null;
+  dialogTelemetry.value = true;
+  telemetryLoading.value = true;
+  telemetryData.value = await catalogue.telemetry(stream.id);
+  telemetryLoading.value = false;
+};
+
+onMounted(() => {
+  void loadStreams();
+  void loadActivities();
 });
-
-const startPublish = () => {
-  if (!streamUrl.value || !streamName.value) return;
-  isPublishing.value = true;
-  publishStatus.value = 'connecting';
-  
-  setTimeout(() => {
-    publishStatus.value = 'publishing';
-    setTimeout(() => {
-      publishStatus.value = 'live';
-      isPublishing.value = false;
-    }, 1500);
-  }, 1000);
-};
-
-const stopPublish = () => {
-  publishStatus.value = 'idle';
-  isPublishing.value = false;
-};
-
-const testAudioStream = () => {
-  streamUrl.value = defaultStreamUrl;
-  streamName.value = 'audio-test';
-  publishType.value = 'audio';
-};
-
-const testVideoStream = () => {
-  streamUrl.value = defaultStreamUrl;
-  streamName.value = 'video-test';
-  publishType.value = 'video';
-};
-
-const testBothStream = () => {
-  streamUrl.value = defaultStreamUrl;
-  streamName.value = 'av-test';
-  publishType.value = 'both';
-};
 </script>
 
 <template>
@@ -157,10 +197,10 @@ const testBothStream = () => {
             flat
             bordered
             title="Recent Activity"
-            :rows="dashBaordRecentSalseItems"
+            :rows="activityRows"
             :columns="[
               { name: 'label', label: 'Activity', field: 'label', align: 'left' },
-              { name: 'value', label: 'Value', field: 'value', align: 'left' },
+              { name: 'value', label: 'When', field: 'value', align: 'left' },
             ]"
             row-key="label"
           />
@@ -221,204 +261,162 @@ const testBothStream = () => {
         </q-card>
       </div>
 
-      <!-- Publish Tab -->
+      <!-- Publish Tab: real catalogue API -->
       <div v-if="activeTab === 'publish'">
         <div class="row q-col-gutter-md">
-          <div class="col-12 col-md-6">
+          <div class="col-12 col-md-4">
             <q-card flat bordered class="q-pa-md">
-              <div class="text-h6 q-mb-md">Stream Publishing</div>
+              <div class="text-h6 q-mb-md">Create stream</div>
               <div class="text-body2 text-grey-7 q-mb-md">
-                Configure and start publishing media streams to your media server.
+                Provisions a stream on the media server (POST /catalogue/streams).
               </div>
 
-              <q-btn-toggle
-                v-model="publishType"
-                toggle-color="primary"
-                :options="[
-                  { label: 'Audio Only', value: 'audio', icon: 'headphones' },
-                  { label: 'Video Only', value: 'video', icon: 'videocam' },
-                  { label: 'Audio + Video', value: 'both', icon: 'dual' },
-                ]"
+              <q-input
+                v-model="createForm.title"
+                label="Title"
+                outlined
+                dense
+                class="q-mb-md"
+                placeholder="My live stream"
+              />
+              <q-input
+                v-model="createForm.description"
+                label="Description"
+                type="textarea"
+                outlined
+                dense
+                class="q-mb-md"
+              />
+              <q-toggle
+                v-model="createForm.enable_recording"
+                label="Enable recording (DVR)"
                 class="q-mb-md"
               />
 
-              <q-input
-                v-model="streamUrl"
-                label="Media Server URL"
-                outlined
-                dense
-                class="q-mb-md"
-                :placeholder="defaultStreamUrl"
-              >
-                <template #prepend>
-                  <q-icon name="cloud" />
-                </template>
-              </q-input>
-
-              <q-input
-                v-model="streamName"
-                label="Stream Name / Room"
-                outlined
-                dense
-                class="q-mb-md"
-                placeholder="my-stream"
-              >
-                <template #prepend>
-                  <q-icon name="live_tv" />
-                </template>
-              </q-input>
-
-              <div class="text-caption text-grey-7 q-mb-md">
-                <strong>Publish URL:</strong> {{ publishUrl || 'Enter server URL and stream name' }}
-              </div>
-
-              <div class="q-mb-md">
-                <q-banner class="bg-grey-2" rounded>
-                  <template #avatar>
-                    <q-icon
-                      name="info"
-                      color="grey-7"
-                    />
-                  </template>
-                  <span class="text-weight-medium">
-                    Status:
-                    {{
-                      publishStatus === 'idle'
-                        ? 'Ready'
-                        : publishStatus === 'connecting'
-                        ? 'Connecting...'
-                        : publishStatus === 'publishing'
-                        ? 'Publishing...'
-                        : publishStatus === 'live'
-                        ? 'Live'
-                        : 'Error'
-                    }}
-                  </span>
-                </q-banner>
-              </div>
-
-              <div class="row q-gutter-sm">
-                <q-btn
-                  v-if="publishStatus === 'idle' || publishStatus === 'error'"
-                  color="primary"
-                  label="Start Publishing"
-                  icon="play_arrow"
-                  :disable="!streamUrl || !streamName"
-                  @click="startPublish"
-                />
-                <q-btn
-                  v-else
-                  color="negative"
-                  label="Stop Publishing"
-                  icon="stop"
-                  @click="stopPublish"
-                />
-                <q-btn
-                  flat
-                  label="Test URLs"
-                  icon="science"
-                  @click="testVideoStream"
-                />
-              </div>
-            </q-card>
-          </div>
-
-          <div class="col-12 col-md-6">
-            <q-card flat bordered class="q-pa-md">
-              <div class="text-h6 q-mb-md">Quick Test Streams</div>
-              <div class="text-body2 text-grey-7 q-mb-md">
-                Click to auto-fill test stream configurations for your media server.
-              </div>
-
-              <q-list>
-                <q-item clickable @click="testAudioStream">
-                  <q-item-section avatar>
-                    <q-icon name="headphones" color="primary" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>Audio Stream Test</q-item-label>
-                  </q-item-section>
-                  <q-item-section side>
-                    <q-icon name="chevron_right" />
-                  </q-item-section>
-                </q-item>
-
-                <q-item clickable @click="testVideoStream">
-                  <q-item-section avatar>
-                    <q-icon name="videocam" color="secondary" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>Video Stream Test</q-item-label>
-                  </q-item-section>
-                  <q-item-section side>
-                    <q-icon name="chevron_right" />
-                  </q-item-section>
-                </q-item>
-
-                <q-item clickable @click="testBothStream">
-                  <q-item-section avatar>
-                    <q-icon name="dual" color="accent" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>Audio + Video Stream</q-item-label>
-                  </q-item-section>
-                  <q-item-section side>
-                    <q-icon name="chevron_right" />
-                  </q-item-section>
-                </q-item>
-              </q-list>
+              <q-btn
+                color="primary"
+                label="Create stream"
+                icon="add"
+                :loading="creating"
+                :disable="!createForm.title"
+                @click="onCreateStream"
+              />
 
               <q-separator class="q-my-md" />
-
-              <div class="text-subtitle2 q-mb-sm">Server Configuration</div>
-              <q-input
-                v-model="streamUrl"
-                label="RTSP/RTMP Server"
-                outlined
-                dense
-                class="q-mb-sm"
-                placeholder="rtsp://localhost:8554"
-              >
-                <template #prepend>
-                  <q-icon name="settings_ethernet" />
-                </template>
-              </q-input>
-              <q-input
-                v-model="streamUrl"
-                label="HLS Output URL"
-                outlined
-                dense
-                placeholder="https://your-server.com:8888"
-              >
-                <template #prepend>
-                  <q-icon name="http" />
-                </template>
-              </q-input>
-            </q-card>
-
-            <q-card flat bordered class="q-pa-md q-mt-md">
-              <div class="text-h6 q-mb-md">Publishing Help</div>
+              <div class="text-subtitle2 q-mb-sm">Publishing Help</div>
               <div class="text-body2 text-grey-7">
                 <p class="q-mb-sm">
-                  <strong>To publish a stream, you can use FFmpeg:</strong>
+                  <strong>FFmpeg (RTMP):</strong>
                 </p>
                 <q-card flat class="bg-grey-1 q-pa-sm">
                   <code style="font-size: 0.75rem">
-                    ffmpeg -re -i video.mp4 -c:v libx264 -c:a aac -f rtsp rtsp://server:8554/stream
+                    ffmpeg -re -i video.mp4 -c:v libx264 -c:a aac -f flv rtmp://&lt;media-host&gt;/live/&lt;stream-key&gt;
                   </code>
                 </q-card>
                 <p class="q-mt-sm q-mb-xs">
-                  <strong>Or for RTMP:</strong>
+                  <strong>FFmpeg (RTSP ingest URL shown per stream below):</strong>
                 </p>
                 <q-card flat class="bg-grey-1 q-pa-sm">
                   <code style="font-size: 0.75rem">
-                    ffmpeg -re -i video.mp4 -c:v libx264 -c:a aac -f flv rtmp://server:1935/live/stream
+                    ffmpeg -re -i video.mp4 -c:v libx264 -c:a aac -f rtsp &lt;ingest_url&gt;
                   </code>
                 </q-card>
               </div>
             </q-card>
           </div>
+
+          <div class="col-12 col-md-8">
+            <q-card flat bordered class="q-pa-md">
+              <div class="text-h6 q-mb-md">Streams</div>
+              <q-table
+                flat
+                :rows="streams"
+                :loading="streamsLoading"
+                row-key="id"
+                :columns="[
+                  { name: 'title', label: 'Title', field: 'title', align: 'left' },
+                  { name: 'status', label: 'Status', field: 'status', align: 'left' },
+                  { name: 'playback', label: 'HLS', field: 'playback_url', align: 'left' },
+                  { name: 'actions', label: '', field: 'id', align: 'center' },
+                ]"
+                :rows-per-page-options="[0]"
+                hide-pagination
+              >
+                <template #body-cell-status="props">
+                  <q-td :props="props">
+                    <q-badge :color="props.row.status === 'live' ? 'positive' : 'grey-6'">
+                      {{ props.row.status }}
+                    </q-badge>
+                  </q-td>
+                </template>
+                <template #body-cell-playback="props">
+                  <q-td :props="props">
+                    <a
+                      v-if="hlsUrl(props.row)"
+                      :href="hlsUrl(props.row)"
+                      target="_blank"
+                      class="text-primary"
+                      style="font-size: 0.8rem"
+                    >
+                      {{ hlsUrl(props.row).slice(0, 42) }}…
+                    </a>
+                    <span v-else class="text-grey-5">—</span>
+                  </q-td>
+                </template>
+                <template #body-cell-actions="props">
+                  <q-td :props="props" class="text-center" style="white-space: nowrap">
+                    <q-btn flat dense size="sm" color="primary" icon="vpn_key" title="Sync token" @click="onSyncToken(props.row)" />
+                    <q-btn flat dense size="sm" color="secondary" icon="monitor_heart" title="Telemetry" @click="onTelemetry(props.row)" />
+                    <q-btn flat dense size="sm" color="negative" icon="delete" title="Delete" @click="onDeleteStream(props.row)" />
+                  </q-td>
+                </template>
+              </q-table>
+            </q-card>
+          </div>
         </div>
+
+        <!-- Sync token dialog -->
+        <q-dialog v-model="dialogSync">
+          <q-card style="min-width: 480px">
+            <q-card-section class="text-h6">Playback / sync token</q-card-section>
+            <q-card-section class="q-gutter-sm">
+              <q-input :model-value="syncTokenData?.token" readonly outlined dense label="token" />
+              <q-input :model-value="syncTokenData?.sync_token" readonly outlined dense label="sync_token" />
+              <q-input :model-value="syncTokenData?.ws_sync_url" readonly outlined dense label="ws_sync_url" />
+              <div class="text-caption text-grey-7">
+                scope: {{ syncTokenData?.scope_type }}/{{ syncTokenData?.scope_id }} ·
+                role: {{ syncTokenData?.role }} · expires in {{ syncTokenData?.expires_in }}s
+              </div>
+            </q-card-section>
+            <q-card-actions align="right">
+              <BaseButton flat label="Close" v-close-popup />
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
+
+        <!-- Telemetry dialog -->
+        <q-dialog v-model="dialogTelemetry">
+          <q-card style="min-width: 360px">
+            <q-card-section class="text-h6">Stream telemetry</q-card-section>
+            <q-card-section>
+              <div v-if="telemetryLoading" class="text-grey-6">Loading…</div>
+              <q-list v-else-if="telemetryData" bordered separator>
+                <q-item>
+                  <q-item-section avatar><q-icon :name="telemetryData.live ? 'live_tv' : 'stop_circle'" :color="telemetryData.live ? 'positive' : 'grey'" /></q-item-section>
+                  <q-item-section><q-item-label>{{ telemetryData.live ? 'Live' : 'Offline' }}</q-item-label></q-item-section>
+                </q-item>
+                <q-item><q-item-section>Publishers</q-item-section><q-item-section side>{{ telemetryData.publishers }}</q-item-section></q-item>
+                <q-item><q-item-section>Readers</q-item-section><q-item-section side>{{ telemetryData.readers }}</q-item-section></q-item>
+                <q-item><q-item-section>Bytes in</q-item-section><q-item-section side>{{ telemetryData.bytes_in }}</q-item-section></q-item>
+                <q-item><q-item-section>Bytes out</q-item-section><q-item-section side>{{ telemetryData.bytes_out }}</q-item-section></q-item>
+              </q-list>
+              <div v-else class="text-grey-6">No telemetry (stream not provisioned or STREAMING feature off).</div>
+            </q-card-section>
+            <q-card-actions align="right">
+              <BaseButton flat label="Close" v-close-popup />
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
       </div>
     </BaseCard>
   </div>

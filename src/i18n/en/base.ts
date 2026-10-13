@@ -366,6 +366,20 @@ export default {
         'months': 'January_February_March_April_May_June_July_August_September_October_November_December',
         'monthShorts': 'Jan._Feb._Mar._Apr._May_Jun._Jul._Aug._Sep._Oct._Nov._Dec.'
     },
+    'economy': {
+        'title': 'Economy',
+        'points': 'Points',
+        'balance': 'Credit balance',
+        'reserved': 'reserved',
+        'transfer': 'Transfer credits',
+        'transferTitle': 'Transfer credits',
+        'recipient': 'Recipient user ID',
+        'amount': 'Amount',
+        'note': 'Note',
+        'leaderboard': 'Leaderboard',
+        'rank': 'Rank',
+        'player': 'Player',
+    },
     'members': {
         'title': 'Organization members',
         'userId': 'User ID',

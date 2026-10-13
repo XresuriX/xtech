@@ -43,12 +43,14 @@ Evidence: deliverables `01`–`06` in this directory.
 
 **Verify:** `pnpm build` ✅, typecheck holds 63, eslint clean on touched files, `test:run` ✅ 22. Members page needs live Zitadel+backend for E2E.
 
-## Phase 5 — Feature surfaces (F)
-1. Catalogue: streams list/create/edit/delete, recordings (DVR), restream targets (**bare-array PUT**), telemetry — rewire `/admin` from hardcoded HLS to `POST /catalogue/streams` + `POST .../sync-token` (`{token, sync_token, ws_sync_url, ...}` — drift §4 in `01`).
-2. Conferences: rooms CRUD + `sync-token` + mute.
-3. Playback/sync: consume `ws_sync_url` / media `WS /ws/sync/*` (xtc-media, `API_CONTRACT.md §1b`).
-4. Notifications: `WS /ws/notifications?token=` composable (ping/pong, close 4401); unread count = client-side from inbox (`REWORK` row in `05`).
-5. Economy: wallet/points/leaderboard view; transfer with 402 handling.
+## Phase 5 — Feature surfaces (F) — **DONE 2026-10-12**
+1. ✅ Catalogue: `CatalogueService.ts` (list `status_filter`, create/get/update/remove, sync-token code-shape §drift4, restream targets **bare-array PUT** §drift5, recordings, recording toggle, telemetry); `/admin` Publish tab rewired from fake publish flow to real `POST /catalogue/streams` + streams table (HLS link, sync-token dialog, telemetry dialog, delete); Overview "Recent Activity" now `GET /activities` (falls back to demo rows when empty). Demo chart tabs kept (user WIP).
+2. ✅ Conferences: `ConferenceService.ts` (CRUD + sync-token + participant mute) — **service only, no UI page yet**.
+3. ✅ Playback/sync: `useSyncSocket` composable (API_CONTRACT §1b: welcome/presence/state/transport/chat/timesync, ping heartbeat, close 4401/4408 no-reconnect, reconnect backoff; consumes `ws_sync_url` + `token` from sync-token response). Consumers (player page) come with feature work.
+4. ✅ Notifications: `useNotificationsSocket` (platform `WS /ws/notifications?token=`, ping/pong, 4401 → stop, reconnect backoff; `loadInbox`/`markRead` client-side unread count). Menu wiring (`NotificationBarMenu`) deferred — menu still uses old `UserNotifyService`.
+5. ✅ Economy: `EconomyService.ts` (points/badges/leaderboard/wallet/transfer — 402→FastAPI detail toast) + `/economy` page (points/balance cards, leaderboard table, transfer dialog; en/th i18n).
+
+**Verify:** `test:run` ✅ 32 (10 new mapping tests for catalogue/conference/economy incl. bare-array PUT + status_filter); `build` ✅; typecheck holds 63; touched-file eslint 0 errors. E2E (streams create→telemetry, WS) needs live stack.
 
 ## Phase 6 — B2B2C admin/loyalty (new pages, from `06` §3)
 Rules editor, Tasks manager, Campaigns manager, Broadcast notifications (22 endpoints); guard UI by `org:admin`-family scopes (note: backend currently auth-only — flag for backend hardening).
