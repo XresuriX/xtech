@@ -32,6 +32,12 @@ export interface CustomNotificationBroadcast {
   action_url?: string | null;
   metadata?: Record<string, unknown>;
 }
+export interface CustomNotificationMarkRead {
+  ids?: string[] | null;
+}
+export interface CustomNotificationMarkReadResponse {
+  marked: number;
+}
 export interface CustomNotificationOut {
   id: string;
   sender_id: string;
@@ -83,11 +89,30 @@ export default () => {
       body,
     });
   };
+  const customInbox = async (
+    params?: InboxParams
+  ): Promise<CustomNotificationOut[] | null> => {
+    return await callAxios<CustomNotificationOut[]>({
+      API: `/api/v1/notifications/custom-inbox${buildQuery(params ?? {})}`,
+      method: 'GET',
+    });
+  };
+  const customMarkRead = async (
+    ids?: string[] | null
+  ): Promise<CustomNotificationMarkReadResponse | null> => {
+    return await callAxios<CustomNotificationMarkReadResponse>({
+      API: '/api/v1/notifications/custom-mark-read',
+      method: 'POST',
+      body: { ids: ids && ids.length > 0 ? ids : null },
+    });
+  };
 
   return {
     inbox,
     markRead,
     send,
     broadcast,
+    customInbox,
+    customMarkRead,
   };
 };

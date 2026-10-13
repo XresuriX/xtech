@@ -31,7 +31,7 @@ Evidence: deliverables `01`–`06` in this directory.
 ## Phase 3 — Core service layer rewrite (from `05`) — **DONE 2026-10-12**
 1. ✅ New `src/api/` modules (schemas copied from backend pydantic): `OrgService.ts` (me/create/get/update/remove/getByDomain), `MemberService.ts` (list/add/updateRole/remove), `ActivityService.ts` (list), `NotificationService.ts` (inbox/markRead + send/broadcast for Phase 6 UI), `UtilService.ts` (`health` + `getOgMeta` stub returning null for Phase-6 consumer removal). `SearchService.ts` deleted (zero consumers).
 2. ✅ Cross-cutting: `libs/query.ts` `buildQuery` (limit/offset + filters); FastAPI `{"detail"}` errors now toasted in `useAxios.exeptionNotify` (string or validation-array msgs); removed `X-Sync-Active` header + `canSyncActiveStatusToServer` await from `useAxios`, removed `Accept-Apiclient` from axios defaults (+ env `APP_API_CLIENT` gone); `IMethod` gained `'PATCH'`.
-3. ✅ Old mocked services (`UserService`, `PermissionService`, `RoleService`, `FileManagerService`, `UserNotifyService`) **kept** — their consumers (starter/example pages) are deleted in Phase 6; deleting methods now would grow typecheck errors. MISSING-BACKEND features left as existing dead mocks until then.
+3. ✅ Old mocked services (`UserService`, `PermissionService`, `RoleService`, `FileManagerService`, `UserNotifyService`) **kept** — Phase-6 deletion of consumers superseded by decision #3 (starter pages stay, no pruning); MISSING-BACKEND features left as existing dead mocks.
 
 **Verify:** `pnpm test:run` ✅ 22 tests (incl. 14 new service URL/method/query mapping tests via `vi.mock`); `pnpm build` ✅; typecheck holds at 63 (no new errors); changed-file eslint clean (0 errors). Manual members-list smoke blocked on live Zitadel+backend (same as Phase 2 E2E).
 
@@ -52,8 +52,15 @@ Evidence: deliverables `01`–`06` in this directory.
 
 **Verify:** `test:run` ✅ 32 (10 new mapping tests for catalogue/conference/economy incl. bare-array PUT + status_filter); `build` ✅; typecheck holds 63; touched-file eslint 0 errors. E2E (streams create→telemetry, WS) needs live stack.
 
-## Phase 6 — B2B2C admin/loyalty (new pages, from `06` §3)
-Rules editor, Tasks manager, Campaigns manager, Broadcast notifications (22 endpoints); guard UI by `org:admin`-family scopes (note: backend currently auth-only — flag for backend hardening).
+## Phase 6 — B2B2C admin/loyalty (new pages, from `06` §3) — **DONE 2026-10-12**
+1. ✅ `LoyaltyService.ts` — 18 methods covering rules (`/gamification/rules` CRUD), tasks (`/tasks` CRUD + `complete` + `my-completions` — **shadowed-endpoint drift §3, still called & flagged**), campaigns (`/campaigns` CRUD + `progress`); schemas from `gamification/schemas_custom.py`.
+2. ✅ `NotificationService` += `customInbox` / `customMarkRead` — completes all 22 endpoints of `06` §3.
+3. ✅ `/loyalty` page — **single tabbed page (Rules / Tasks / Campaigns / Broadcast) instead of 4 separate pages** (same endpoint coverage, one shared shell): rules editor incl. conditions JSON + cooldown/max-awards; tasks manager incl. self-complete + "my completions" dialog; campaigns manager incl. datetime window, bonus fields, status select, task multiselect; broadcast tab = send-one/broadcast-many form + custom-inbox list + mark-read.
+4. ✅ Scope gate: UI-level `isOrgAdmin` banner + hidden manage actions (backend enforces auth-only on these 22 routes — drift §7, flagged for backend hardening).
+5. ✅ Route `/loyalty` (`requireAuth`) — direct-URL, no nav entry (consistent with `/members`/`/economy`; nav pruning skipped per decision #3 minimum scope).
+6. Old mocked services (`UserService`/`PermissionService`/`RoleService`/`FileManagerService`/`UserNotifyService`) + their starter/example consumers **kept** — superseded Phase 3 note; deleting them conflicts with decision #3 (leave starter pages unrouted, no pruning).
+
+**Verify:** `test:run` ✅ 38 (+6 loyalty/custom-inbox mapping tests); `build` ✅; typecheck holds 63; touched-file eslint 0 errors. E2E needs live stack.
 
 ## Phase 7 — Tests & CI
 1. HTTP layer tests: `vi.mock` axios or add msw; cover service modules + error mapping (currently 1 sample test, `src/sample.test.ts`).

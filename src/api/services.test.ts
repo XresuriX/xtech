@@ -2,6 +2,7 @@ import ActivityService from './ActivityService';
 import CatalogueService from './CatalogueService';
 import ConferenceService from './ConferenceService';
 import EconomyService from './EconomyService';
+import LoyaltyService from './LoyaltyService';
 import MemberService from './MemberService';
 import NotificationService from './NotificationService';
 import OrgService from './OrgService';
@@ -247,6 +248,83 @@ describe('economy service', () => {
       API: '/api/v1/credits/transfer',
       method: 'POST',
       body: { recipient_id: 'u2', amount: 10 },
+    });
+  });
+});
+
+describe('loyalty service', () => {
+  beforeEach(() => {
+    callAxios.mockReset();
+  });
+
+  it('listRules() passes include_inactive flag', async () => {
+    callAxios.mockResolvedValue([]);
+    await LoyaltyService().listRules({ include_inactive: true });
+    expect(callAxios).toHaveBeenCalledWith({
+      API: '/api/v1/gamification/rules?include_inactive=true',
+      method: 'GET',
+    });
+  });
+
+  it('updateRule() PATCHes the rule uuid path', async () => {
+    callAxios.mockResolvedValue(null);
+    await LoyaltyService().updateRule('rule-1', { points: 5 });
+    expect(callAxios).toHaveBeenCalledWith({
+      API: '/api/v1/gamification/rules/rule-1',
+      method: 'PATCH',
+      body: { points: 5 },
+    });
+  });
+
+  it('completeTask() POSTs task_id to /tasks/complete', async () => {
+    callAxios.mockResolvedValue(null);
+    await LoyaltyService().completeTask('task-1');
+    expect(callAxios).toHaveBeenCalledWith({
+      API: '/api/v1/tasks/complete',
+      method: 'POST',
+      body: { task_id: 'task-1' },
+    });
+  });
+
+  it('myCompletions() reads the shadowed endpoint path (drift §3)', async () => {
+    callAxios.mockResolvedValue([]);
+    await LoyaltyService().myCompletions();
+    expect(callAxios).toHaveBeenCalledWith({
+      API: '/api/v1/tasks/my-completions?limit=50',
+      method: 'GET',
+    });
+  });
+
+  it('campaigns() list + progress + PATCH status', async () => {
+    callAxios.mockResolvedValue(null);
+    await LoyaltyService().listCampaigns();
+    expect(callAxios).toHaveBeenCalledWith({ API: '/api/v1/campaigns', method: 'GET' });
+    await LoyaltyService().campaignProgress('camp-1');
+    expect(callAxios).toHaveBeenCalledWith({
+      API: '/api/v1/campaigns/camp-1/progress',
+      method: 'GET',
+    });
+    await LoyaltyService().updateCampaign('camp-1', { status: 'active' });
+    expect(callAxios).toHaveBeenCalledWith({
+      API: '/api/v1/campaigns/camp-1',
+      method: 'PATCH',
+      body: { status: 'active' },
+    });
+  });
+
+  it('customInbox() and customMarkRead() map to custom routes', async () => {
+    callAxios.mockResolvedValue([]);
+    await NotificationService().customInbox({ limit: 20 });
+    expect(callAxios).toHaveBeenCalledWith({
+      API: '/api/v1/notifications/custom-inbox?limit=20',
+      method: 'GET',
+    });
+    callAxios.mockResolvedValue({ marked: 0 });
+    await NotificationService().customMarkRead(null);
+    expect(callAxios).toHaveBeenCalledWith({
+      API: '/api/v1/notifications/custom-mark-read',
+      method: 'POST',
+      body: { ids: null },
     });
   });
 });
