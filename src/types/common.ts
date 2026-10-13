@@ -38,7 +38,7 @@ export type IHttpStatus =
   | 'BAD_REQUEST'
   | 'FORBIDDEN'
   | 'INTERNAL_SERVER_ERROR';
-export type IMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+export type IMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type IThemeSettingOptions = 'dark' | 'light' | 'system' | 'realtime';
 export type ITheme = 'dark' | 'light';
 export type ILanguge = 'en' | 'th';

@@ -27,8 +27,7 @@ const api = axios.create({
   timeout: process.env.APP_API_TIME_OUT ? +process.env.APP_API_TIME_OUT : 3 * 60000, // 60000 = 1 minute, 0 = no timeout
   headers: {
     // Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-    'Accept-Apiclient': process.env.APP_API_CLIENT
+    'Content-Type': 'application/json'
     // 'Accept-Language': DefaultLocale,
   },
   validateStatus: status => status < 400, // Resolve only if the status code is less than 400

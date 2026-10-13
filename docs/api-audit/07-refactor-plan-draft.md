@@ -28,17 +28,12 @@ Evidence: deliverables `01`–`06` in this directory.
 
 **Verify:** `pnpm test:run` ✅ 11 tests (scopes + oidc url helpers); `pnpm build` ✅; `pnpm typecheck` 63 errors (down from 66 baseline; none in new files); changed-file eslint clean. **Live Zitadel E2E pending** — set `env/.env` `APP_OIDC_ISSUER`/`APP_OIDC_CLIENT_ID`, register redirect URI `<origin>/#/auth/callback`.
 
-## Phase 3 — Core service layer rewrite (from `05`)
-1. New `src/api/` modules mirroring backend domains (keep the service-module pattern):
-   - `OrgService.ts` → `/api/v1/organizations` (`me`, get/patch/delete)
-   - `MemberService.ts` → `/organizations/{org_id}/members` (list/add/patch-role/delete)
-   - `ActivityService.ts` → `/activities`
-   - `NotificationService.ts` → `/notifications/inbox`, `POST /notifications/mark-read`
-   - `UtilService.ts` → `GET /health` (drop `getOgMeta`/`appVersion` or client-side)
-2. Response/request adaptations (cross-cutting table in `05`): bare arrays (already supported `useCrudList.ts:183`), drop `{data:...}` write envelope, UUID path params, `limit/offset` query builder, FastAPI `{"detail"}` error toasts, remove `Accept-Apiclient`/`X-Sync-Active` headers.
-3. Delete or stub `MISSING-BACKEND` features: file upload/avatar/cover, FCM push, search, OG-meta (per §2 DROP decisions).
+## Phase 3 — Core service layer rewrite (from `05`) — **DONE 2026-10-12**
+1. ✅ New `src/api/` modules (schemas copied from backend pydantic): `OrgService.ts` (me/create/get/update/remove/getByDomain), `MemberService.ts` (list/add/updateRole/remove), `ActivityService.ts` (list), `NotificationService.ts` (inbox/markRead + send/broadcast for Phase 6 UI), `UtilService.ts` (`health` + `getOgMeta` stub returning null for Phase-6 consumer removal). `SearchService.ts` deleted (zero consumers).
+2. ✅ Cross-cutting: `libs/query.ts` `buildQuery` (limit/offset + filters); FastAPI `{"detail"}` errors now toasted in `useAxios.exeptionNotify` (string or validation-array msgs); removed `X-Sync-Active` header + `canSyncActiveStatusToServer` await from `useAxios`, removed `Accept-Apiclient` from axios defaults (+ env `APP_API_CLIENT` gone); `IMethod` gained `'PATCH'`.
+3. ✅ Old mocked services (`UserService`, `PermissionService`, `RoleService`, `FileManagerService`, `UserNotifyService`) **kept** — their consumers (starter/example pages) are deleted in Phase 6; deleting methods now would grow typecheck errors. MISSING-BACKEND features left as existing dead mocks until then.
 
-**Verify:** vitest with `vi.mock`/msw for the new services; manual smoke of members list against local backend.
+**Verify:** `pnpm test:run` ✅ 22 tests (incl. 14 new service URL/method/query mapping tests via `vi.mock`); `pnpm build` ✅; typecheck holds at 63 (no new errors); changed-file eslint clean (0 errors). Manual members-list smoke blocked on live Zitadel+backend (same as Phase 2 E2E).
 
 ## Phase 4 — Page rewiring
 1. Restore router entries: `/auth` (OIDC), `/error*`, members page (reworked `/user`), settings (trimmed).

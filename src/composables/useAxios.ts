@@ -1,5 +1,4 @@
 import { useBase } from '@/composables/useBase';
-import { useDevice } from '@/composables/useDevice';
 import { useLang } from '@/composables/useLang';
 import type { AppException, RequestType, ResponseMessage } from '@/types/common';
 import { isAppException, isServerException, isServerResponseMessage } from '@/utils/appUtil';
@@ -12,7 +11,6 @@ import { Cookies } from 'quasar';
 import { useSSRContext } from 'vue';
 
 export const useAxios = () => {
-  const { canSyncActiveStatusToServer } = useDevice();
   const { appToast, appLoading, isDevMode } = useBase();
   const { locale } = useLang();
   const ssrContext = process.env.SERVER ? useSSRContext() : null;
@@ -126,12 +124,50 @@ export const useAxios = () => {
   //       });
   //   });
   // };
+  const getFastApiDetail = (data: unknown): string | null => {
+    if (!data || typeof data !== 'object' || !('detail' in data)) {
+      return null;
+    }
+    const detail = (data as { detail: unknown }).detail;
+    if (typeof detail === 'string' && detail) {
+      return detail;
+    }
+    if (Array.isArray(detail)) {
+      const messages = detail
+        .map((item) =>
+          item && typeof item === 'object' && 'msg' in item
+            ? String((item as { msg: unknown }).msg)
+            : ''
+        )
+        .filter(Boolean);
+      if (messages.length > 0) {
+        return messages.join('<br>');
+      }
+    }
+    return null;
+  };
+  const notifyFastApiDetail = (detail: string): void => {
+    appLoading(false);
+    appToast(`<strong>${detail}</strong>`, {
+      multiLine: true,
+      html: true,
+      type: 'negative',
+      timeout: 10 * 1000,
+      position: 'bottom-left',
+      actions: [{ icon: biX, color: 'white' }],
+    });
+  };
   const exeptionNotify = <T>(response: AxiosResponse<T>) => {
     if (response && response.data) {
       if (isAppException(response.data)) {
         notifyMessage(response.data);
       } else if (isServerResponseMessage(response.data)) {
         notifyServerMessage(response.data);
+      } else {
+        const detail = getFastApiDetail(response.data);
+        if (detail) {
+          notifyFastApiDetail(detail);
+        }
       }
     }
   };
@@ -148,7 +184,6 @@ export const useAxios = () => {
     });
   };
   const callAxiosProcess = async <T>(req: RequestType, devLog: boolean = true): Promise<AxiosResponse<T>> => {
-    const canSyncOnlineStatus = await canSyncActiveStatusToServer();
     return new Promise((resolve, reject) => {
       api.defaults.headers.Authorization = `Bearer ${cookies.get(AppAuthTokenKey)}`;
       // console.log('useAxios > callAxios :', req);
@@ -169,7 +204,6 @@ export const useAxios = () => {
         api.defaults.responseType = 'json';
       }
 
-      api.defaults.headers['X-Sync-Active'] = canSyncOnlineStatus ? '1' : '0';
       api({
         method: req.method,
         url: req.API,
