@@ -1,12 +1,10 @@
-import { AppAuthRefeshTokenKey, LocaleKey } from '@/libs/constant';
+import { AppAuthTokenKey, LocaleKey } from '@/libs/constant';
+import { isOidcConfigured, signInSilent, syncAuthSession } from '@/services/oidc';
 import type { AxiosInstance } from 'axios';
 import axios from 'axios';
 import { boot } from 'quasar/wrappers';
 // TODO cannot use external file import in boot file >  https://github.com/quasarframework/quasar/issues/17365
 import { Cookies } from 'quasar';
-// import { canRefreshToken } from '@/utils/JwtUtil';
-import { useAuthenStore } from '@/stores/authenStore';
-// import { getTokenStatus } from '@/utils/jwtUtil';
 import JSONbig from 'json-bigint'
 const JSONbigString = JSONbig({ storeAsString: true });
 declare module '@vue/runtime-core' {
@@ -41,7 +39,7 @@ const api = axios.create({
       try {
         const parsed = JSONbigString.parse(data);
         return parsed;
-      } catch (e) {
+      } catch {
         return data;
       }
     }
@@ -49,31 +47,16 @@ const api = axios.create({
   }]
 });
 
-
-// for multiple requests
-let isRefreshing = false;
-let failedQueue: any[] = [];
-const processQueue = (error: any, token = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-
-  failedQueue = [];
-};
-
-export default boot(({ app, redirect, ssrContext, store }) => {
-  const authenStore = useAuthenStore(store);
+export default boot(({ app, redirect }) => {
   // Check if interceptors are already set up
   const isServer = process.env.SERVER;
   if (!isServer) {
     api.interceptors.request.use(async (config) => {
-      // const ck = isServer ? Cookies.parseSSR(ssrContext) : Cookies;
-      // const jwtKey = ck.get(AppAuthTokenKey);
       config.headers['Accept-Language'] = Cookies.get(LocaleKey);
+      const token = Cookies.get(AppAuthTokenKey);
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
       return config;
     }, (error) => {
       return Promise.reject(error);
@@ -81,75 +64,28 @@ export default boot(({ app, redirect, ssrContext, store }) => {
     api.interceptors.response.use((response) => {
       return response;
     }, async (error) => {
-      const originalRequest = error.config;
-      // const ck = isServer ? Cookies.parseSSR(ssrContext) : Cookies;
-      const refreshToken = Cookies.get(AppAuthRefeshTokenKey);
-      if (refreshToken && error.response && error.response.status === 401 && !originalRequest._retry) {
-        if (isRefreshing) {
-          return new Promise((resolve, reject) => {
-            console.warn('isRefreshing > failedQueue.push', originalRequest.url);
-            failedQueue.push({ resolve, reject });
-          }).then((token) => {
-            originalRequest.headers.Authorization = 'Bearer ' + token;
-            return api(originalRequest);
-          }).catch((err) => {
-            return Promise.reject(err);
-          });
-        }
-
-        // TODO
-        // const currentToken = Cookies.get(AppAuthTokenKey);
-        // if (currentToken) {
-        //   const currentExpireStatus = await getTokenStatus(currentToken);
-        //   console.log('try new call currentExpireStatus', 'currentToken', currentToken, currentExpireStatus);
-        //   if (currentExpireStatus && currentExpireStatus == 'VALID') {
-        //     originalRequest.headers['Authorization'] = 'Bearer ' + currentToken;
-        //     return api(originalRequest);
-        //   }
-        // }
-
+      const originalRequest = error?.config;
+      const status = error?.response?.status;
+      if (
+        status === 401 &&
+        originalRequest &&
+        !originalRequest._retry &&
+        isOidcConfigured()
+      ) {
         originalRequest._retry = true;
-        isRefreshing = true;
-
-        // eslint-disable-next-line no-async-promise-executor
-        return new Promise(async (resolve, reject) => {
-          console.warn('/api/auth/refreshToken', refreshToken);
-
-          api.defaults.baseURL = process.env.APP_BASE_API || '';
-          api.defaults.responseType = 'json';
-          api.defaults.headers['Content-Type'] = 'application/json';
-          api.post('/api/auth/refreshToken', {
-            refreshToken: {
-              refreshToken
-            }
-          })
-            .then(async ({ data }) => {
-              console.warn('/api/auth/refreshToken then', data);
-              // if (data && data.refreshToken && data.authenticationToken) {
-              await authenStore.setRefreshTokenCookie(undefined, data);
-              originalRequest.headers.Authorization = 'Bearer ' + data.authenticationToken;
-              processQueue(null, data.authenticationToken);
-              console.warn('/api/auth/refreshToken end');
-              resolve(api(originalRequest));
-            })
-            .catch((errRefesh) => {
-              isRefreshing = false;
-              console.warn('/api/auth/refreshToken catch', errRefesh);
-              processQueue(errRefesh, null);
-              if (errRefesh?.response && errRefesh?.response?.status) {
-                if (errRefesh.response.status == 403) {
-                  console.warn('GOTO LoginPage');
-                  redirect({ path: '/auth/login' });
-                }
-              }
-              resolve(errRefesh);
-            })
-            .finally(() => {
-              isRefreshing = false;
-            });
-        });
+        // oidc-client-ts renews via refresh_token when present, otherwise throws
+        const renewed = await signInSilent();
+        if (renewed) {
+          const token = Cookies.get(AppAuthTokenKey);
+          if (token) {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+          }
+          return api(originalRequest);
+        }
+        // session gone - back to login (IdP redirects straight to Zitadel)
+        syncAuthSession(null);
+        redirect({ path: '/auth/login' });
       }
-
       return Promise.reject(error);
     });
   }
@@ -158,4 +94,3 @@ export default boot(({ app, redirect, ssrContext, store }) => {
 });
 
 export { api };
-

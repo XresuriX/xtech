@@ -18,15 +18,15 @@ Evidence: deliverables `01`–`06` in this directory.
 
 **Files:** `quasar.config.ts`, `env/.env*`, `package.json`, `src/pages/admin/index.vue`, `src/pages/landing/demo.vue`, `src/pages/landing/blog-player.vue`.
 
-## Phase 2 — Auth (from `04-auth-gap.md`; option A assumed)
-1. Add OIDC lib (`oidc-client-ts`), `src/boot/oidc.ts`: discovery from `ZITADEL_ISSUER`, code+PKCE login, silent refresh, RP-initiated logout.
-2. Rewrite `boot/axios.ts` interceptor: attach lib access token; single-flight refresh via lib; 403 → error toast (not login redirect); 401 after refresh fail → logout.
-3. Rewrite `useAuth.ts` (signIn = redirect flow; signOut = clear + end-session); delete `api/AuthenService.ts` mocks, `authenStore.refreshTokenProcess` (dead), `utils/jwtUtil.ts` refresh logic.
-4. Rewrite `boot/requireAuth.ts`: guard on valid (unexpired) token + required scopes; map HEAD `meta.permission` codes → Zitadel scopes.
-5. Derive UI permissions: parse `urn:zitadel:iam:org:project:roles` claims → `appStore.setPermissions()`; delete `PermissionService.userAcl` concept.
-6. Login page: replace demo creds (`login.vue:34-35`) with "Sign in" redirect.
+## Phase 2 — Auth (from `04-auth-gap.md`; option A assumed) — **DONE 2026-10-12**
+1. ✅ OIDC lib (`oidc-client-ts@3.5.0`), `src/services/oidc.ts` + `src/boot/oidc.ts`: discovery from `APP_OIDC_ISSUER`, code+PKCE; silent renew = `signinSilent()` (refresh_token grant when `offline_access` issued, else falls back to login redirect); **local logout** (`removeUser` + cookie clear) — IdP end-session not provisioned yet (needs `post_logout_redirect_uri` in Zitadel; revisit with E2E).
+2. ✅ `boot/axios.ts`: access token attached in request interceptor from cookie; 401 → `signinSilent()` → retry once → else clear session + `/auth/login`; 403 left to `useAxios` toast path.
+3. ✅ `useAuth.ts` rewritten (`signIn` redirect, `signOut` local); deleted `api/AuthenService.ts`, `components/app/ForgotPassword.vue`, `authenStore` refresh machinery, `jwtUtil` refresh helpers (`decodeJWT` kept). `settings/security.vue` session-revoke stubbed (IdP-managed).
+4. ✅ `boot/requireAuth.ts`: guard on present + unexpired token (decode `exp`); redirect `/auth/login`. Scope guard wired via appStore scopes (no route meta yet — routes restored in Phase 4).
+5. ✅ Claims: `urn:zitadel:iam:org:project:roles` → roles → `libs/scopes.ts` (mirror of backend `scopes.py`) → `appStore.setScopes()`/`hasScope()`/`isOrgAdmin`; also populates `authenStore.auth` display fields. Old `permissions` code API untouched.
+6. ✅ Login page: SSO redirect button (`authen.ssoSignIn/i18n` en+th); shows config warning when `APP_OIDC_ISSUER`/`APP_OIDC_CLIENT_ID` empty. Routes: `/auth/login` restored (blank layout).
 
-**Verify:** login round-trip against dev Zitadel; 401/403 behaviors; `pnpm test:run`.
+**Verify:** `pnpm test:run` ✅ 11 tests (scopes + oidc url helpers); `pnpm build` ✅; `pnpm typecheck` 63 errors (down from 66 baseline; none in new files); changed-file eslint clean. **Live Zitadel E2E pending** — set `env/.env` `APP_OIDC_ISSUER`/`APP_OIDC_CLIENT_ID`, register redirect URI `<origin>/#/auth/callback`.
 
 ## Phase 3 — Core service layer rewrite (from `05`)
 1. New `src/api/` modules mirroring backend domains (keep the service-module pattern):
@@ -60,7 +60,7 @@ Rules editor, Tasks manager, Campaigns manager, Broadcast notifications (22 endp
 1. HTTP layer tests: `vi.mock` axios or add msw; cover service modules + error mapping (currently 1 sample test, `src/sample.test.ts`).
 2. Auth flow tests (OIDC mock), guard tests.
 3. `pnpm lint` + `typecheck` + `test:run` in CI.
-4. **Typecheck debt:** `pnpm typecheck` script added in Phase 1; baseline = **66 pre-existing errors / 37 files** (2026-10-12, never ran before). Fix before enabling CI gate; many files are rewritten or deleted in Phases 2–6 (login/useAuth/settings/permission pages), so re-baseline after Phase 6. Top clusters: `BabylonBasicScene.vue` (10), `AudioPlayer.vue` (7), MetaTagOptions string-vs-record (9 landing pages), `chats/*` (7), `src-ssr/*` (3).
+4. **Typecheck debt:** `pnpm typecheck` script added in Phase 1; baseline = **66 pre-existing errors / 37 files** (2026-10-12, never ran before); after Phase 2 = **63 errors / 34 files**. Fix before enabling CI gate; many files are rewritten or deleted in Phases 2–6 (login/useAuth/settings/permission pages), so re-baseline after Phase 6. Top clusters: `BabylonBasicScene.vue` (10), `AudioPlayer.vue` (7), MetaTagOptions string-vs-record (9 landing pages), `chats/*` (7), `src-ssr/*` (3).
 
 ---
 

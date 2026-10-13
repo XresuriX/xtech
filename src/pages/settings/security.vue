@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import AuthenService from '@/api/AuthenService';
 import UserService from '@/api/UserService';
 import { useAppMeta } from '@/composables/useAppMeta';
 import { useAuth } from '@/composables/useAuth';
@@ -20,7 +19,8 @@ const { appConfirm, appLoading } = useBase();
 const { t } = useLang();
 const { signOut } = useAuth();
 const { selfUpdatePassword, currentAuthSession } = UserService();
-const { removeAccessTokenSession } = AuthenService();
+// access-token session revoke lives at the IdP (Zitadel) - local stub keeps this page compiling
+const removeAccessTokenSession = async (_id: string | number): Promise<{ status: string }> => ({ status: 'OK' });
 const { pages } = usePaging(10);
 const currentPassword = ref<string>('');
 const newPassword = ref<string>('');

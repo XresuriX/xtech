@@ -368,6 +368,9 @@ export default {
     },
     'authen': {
         'login': 'Login',
+        'ssoSignIn': 'Sign in with SSO',
+        'ssoHelper': 'You will be redirected to your organization identity provider to continue.',
+        'ssoNotConfigured': 'Single sign-on is not configured. Set APP_OIDC_ISSUER and APP_OIDC_CLIENT_ID in the environment file.',
         'helper1': 'Enter the verification code we just sent you on email address.',
         'helper2': 'For safety in using the system, the new password \'must have a length of 8 characters or more\' and \'must be mixed with numbers and letters\' and \'use both lowercase and uppercase letters\'.',
         'username': 'Username',

@@ -1,9 +1,11 @@
 import type { LabelValue } from '@/types/common';
+import { Scopes } from '@/libs/scopes';
 import { defineStore } from 'pinia';
 import type { RBACProps } from 'src/types/props';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 export const useAppStore = defineStore('appStore', () => {
     const permissions = ref<string[]>([]);
+    const scopes = ref<string[]>([]);
     const drawers = ref<LabelValue<any>[]>([]);
     const drawerOpen = ref<boolean>(false);
     const expandDrawer = ref<boolean>(true);
@@ -12,6 +14,13 @@ export const useAppStore = defineStore('appStore', () => {
     const setPermissions = (items: string[]) => {
         permissions.value = items;
     }
+    const setScopes = (items: string[]) => {
+        scopes.value = items;
+    }
+    const hasScope = (code: string | undefined): boolean => {
+        return code == undefined || scopes.value.includes(code);
+    }
+    const isOrgAdmin = computed(() => scopes.value.includes(Scopes.ORG_ADMIN));
     const isPermited = (code: string): boolean => {
         return permissions.value.find((t: string) => t === code) != undefined;
     }
@@ -184,6 +193,10 @@ export const useAppStore = defineStore('appStore', () => {
     return {
         permissions,
         setPermissions,
+        scopes,
+        setScopes,
+        hasScope,
+        isOrgAdmin,
         hasPermission,
         hasPermissionLazy,
         isHavePermission,

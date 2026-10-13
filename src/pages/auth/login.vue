@@ -1,54 +1,30 @@
 <script setup lang="ts">
-import AuthenService from '@/api/AuthenService';
 import { useAuth } from '@/composables/useAuth';
 import { useDevice } from '@/composables/useDevice';
 import { useLang } from '@/composables/useLang';
-import { useValidation } from '@/composables/useValidation';
+import { isOidcConfigured } from '@/services/oidc';
 import { getYearNow } from '@/utils/dateUtil';
-import {
-  biChevronExpand,
-  biEye,
-  biEyeSlash,
-  biGlobe,
-  biLock,
-  biPerson,
-} from '@quasar/extras/bootstrap-icons';
 import { Cookies, useMeta } from 'quasar';
 import BaseButton from 'src/components/base/BaseButton.vue';
-import BaseInput from 'src/components/base/BaseInput.vue';
 import BaseLangugeSwitcherButton from 'src/components/base/BaseLangugeSwitcherButton.vue';
-import BaseLink from 'src/components/base/BaseLink.vue';
 import BasePage from 'src/components/base/BasePage.vue';
 import BaseThemeSwitcher from 'src/components/base/BaseThemeSwitcher.vue';
 import Ellipsis from 'src/components/base/BaseEllipsis.vue';
 import { useBase } from 'src/composables/useBase';
 import { AppAuthTokenKey } from 'src/libs/constant';
-import { defineAsyncComponent, onMounted, ref } from 'vue';
-const ForgotPassword = defineAsyncComponent(() => import('@/components/app/ForgotPassword.vue'));
-const { getDeviceId, isSmallScreen } = useDevice();
-const { singin } = AuthenService();
-const { setAuthenticationCookies } = useAuth();
-const { t, currenLocale } = useLang();
-const { required } = useValidation();
+import { ref } from 'vue';
+const { isSmallScreen } = useDevice();
+const { signIn } = useAuth();
+const { t } = useLang();
 const { isDark } = useBase();
-const email = ref<string | null>('admin@mydomain.com');
-const password = ref<string | null>('P@ssw0rd');
-const showPassword = ref<boolean>(false);
 const loading = ref<boolean>(false);
-const loginForm = ref(null);
-const deviceId = ref();
-const rememberMe = ref(false);
-const dialogForgotPassword = ref<boolean>(false);
+const oidcReady = isOidcConfigured();
 const appVersion = process.env.APP_VERSION;
-// useMeta({
-//   title: `${t('page.login')} | ${t('app.monogram')}`,
-// });
 defineOptions({
   preFetch({ ssrContext, redirect }) {
     const cookies = process.env.SERVER ? Cookies.parseSSR(ssrContext) : Cookies;
-    // detroyAuthCookie(cookies);
     if (cookies.get(AppAuthTokenKey)) {
-      redirect({ path: '/' });
+      redirect({ path: '/admin' });
     }
   },
 });
@@ -92,35 +68,14 @@ const metaData = {
   },
 };
 useMeta(metaData);
-onMounted(async () => {
-  // destroyAuthDataAndRedirect(false);
-  deviceId.value = await getDeviceId();
-});
 
 const onSubmit = async () => {
-  loading.value = true;
-  const response = await singin({
-    user: {
-      emailOrUsername: email.value,
-      password: password.value,
-      loginFrom: 'WEB',
-      deviceId: deviceId.value ? deviceId.value : null,
-    },
-  });
-  console.log('response', response);
-  loading.value = false;
-  if (response && response.authenticationToken) {
-    setAuthenticationCookies(response);
-    loading.value = false;
-    // redirect to index page
-    // window.location.replace('/');
-    window.location.replace(process.env.APP_PUBLIC_PATH || '/');
+  if (!oidcReady) {
+    return;
   }
-};
-const onReset = () => {
-  email.value = null;
-  password.value = null;
-  showPassword.value = false;
+  loading.value = true;
+  // never returns - browser navigates to the identity provider
+  await signIn('/admin');
 };
 </script>
 <template>
@@ -169,85 +124,34 @@ const onReset = () => {
             </div>
           </div>
 
-          <q-form ref="loginForm" class="q-gutter-md" @submit.prevent="onSubmit" @reset="onReset()">
-            <BaseInput
-              v-model="email"
-              :readonly="loading"
-              :dense="false"
-              :label="t('base.emailOrUsername')"
-              :rules="[required]"
+          <q-form class="q-gutter-md" @submit.prevent="onSubmit">
+            <div
+              v-if="!oidcReady"
+              class="q-pa-md rounded-borders text-body2"
+              :class="isDark ? 'bg-grey-9 text-grey-3' : 'bg-grey-3 text-grey-8'"
             >
-              <template #prepend>
-                <q-icon :name="biPerson" color="grey-9" />
-              </template>
-            </BaseInput>
-            <BaseInput
-              v-model="password"
-              :readonly="loading"
-              :dense="false"
-              :type="showPassword ? 'text' : 'password'"
-              :label="t('authen.password')"
-              :rules="[required]"
-            >
-              <template #prepend>
-                <q-icon :name="biLock" color="grey-9" />
-              </template>
-              <template #append>
-                <q-icon
-                  :name="showPassword ? biEye : biEyeSlash"
-                  class="cursor-pointer"
-                  color="grey-9"
-                  @click="showPassword = !showPassword"
-                />
-              </template>
-            </BaseInput>
-
-            <div class="row items-center justify-between">
-              <q-checkbox v-model="rememberMe" label="Remember me" />
-              <!-- <BaseLink to="/auth/forgot-password" color="primary">
-                {{ t('authen.forgetPassword') }}
-              </BaseLink> -->
-              <BaseButton
-                flat
-                :label="t('authen.forgetPassword')"
-                @click="dialogForgotPassword = true"
-              />
+              {{ t('authen.ssoNotConfigured') }}
+            </div>
+            <div v-else class="text-body2 text-grey-6 text-center">
+              {{ t('authen.ssoHelper') }}
             </div>
 
             <div class="q-px-sm">
               <BaseButton
                 unelevated
                 :loading="loading"
+                :disable="!oidcReady"
                 size="lg"
                 color="primary"
                 class="full-width text-white"
-                :label="t('authen.login')"
+                :label="t('authen.ssoSignIn')"
                 type="submit"
               />
             </div>
           </q-form>
 
           <div class="text-center q-mt-lg">
-            Don't have an account?
-            <BaseLink to="/signup" color="primary">Sign Up</BaseLink>
-            <!-- <BaseLink to="/auth/forgot-password">
-                               {{ t('authen.forgetPassword') }}
-                           </BaseLink> -->
-
-            <q-separator class="q-my-md" />
             <div class="row items-center q-gutter-x-md justify-center">
-              <!-- <q-btn
-                size="13px"
-                flat
-                dense
-                no-caps
-                no-wrap
-                :icon="biGlobe"
-                :label="currenLocale ? currenLocale.name : ''"
-              >
-                <q-icon class="q-ml-sm" :name="biChevronExpand" size="14px" />
-                <BaseLangugeSwitcher anchor="top left" self="bottom left" close-on-click />
-              </q-btn> -->
               <BaseLangugeSwitcherButton anchor="top left" self="bottom left" close-on-click />
               <BaseThemeSwitcher />
               <div :class="isDark ? 'text-grey-5' : 'text-grey-7'">
@@ -258,7 +162,6 @@ const onReset = () => {
         </div>
       </div>
     </div>
-    <forgot-password v-if="dialogForgotPassword" v-model="dialogForgotPassword" />
   </BasePage>
 </template>
 <style scoped>

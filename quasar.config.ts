@@ -15,6 +15,7 @@ export default defineConfig((ctx) => {
     boot: [
       'i18n',
       'axios',
+      { path: 'oidc', server: false },
       'requireAuth',
       { path: 'dompurify', server: false },
       { path: 'pdfVue', server: false },
