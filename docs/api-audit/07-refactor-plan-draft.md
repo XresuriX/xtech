@@ -35,11 +35,13 @@ Evidence: deliverables `01`–`06` in this directory.
 
 **Verify:** `pnpm test:run` ✅ 22 tests (incl. 14 new service URL/method/query mapping tests via `vi.mock`); `pnpm build` ✅; typecheck holds at 63 (no new errors); changed-file eslint clean (0 errors). Manual members-list smoke blocked on live Zitadel+backend (same as Phase 2 E2E).
 
-## Phase 4 — Page rewiring
-1. Restore router entries: `/auth` (OIDC), `/error*`, members page (reworked `/user`), settings (trimmed).
-2. Rework `pages/user/*` → org members UI (list/add/role/remove; no single-member GET → client-side filter).
-3. Prune `libs/navs.ts` dead links; delete starter pages decided in §2 (permission/role CRUD, examples) — or leave unrouted but remove nav references (minimum).
-4. Dashboard `pages/index.vue` (optional): wire `GET /activities`, inbox, `GET /points`, `GET /wallet`.
+## Phase 4 — Page rewiring — **DONE 2026-10-12 (minimum scope, per user decision #3)**
+1. ✅ Router: `/auth/login` (Phase 2), `/error`, `/members` (requireAuth) added; `/admin` + landing kept.
+2. ✅ New `pages/members/index.vue` (starter `pages/user/*` **left untouched/unrouted**): org members via `OrgService.me` + `MemberService` (list/add/role-change/remove; owner protected client+backend; actions gated by `appStore.isOrgAdmin && hasScope(MEMBERS_WRITE)`); en/th i18n `members.*`.
+3. ✅ Minimum on starter pages (user decision 2026-10-12): files kept, no routes/nav pruning needed — `navs.ts`/`BaseSidebar` chain is dormant (only unrouted starter pages import it; live landing nav is separate WIP). Settings/chat/examples remain unrouted.
+4. ⏸ Dashboard wiring (plan-optional) deferred; settings rework deferred to Phase 6 cleanup pass.
+
+**Verify:** `pnpm build` ✅, typecheck holds 63, eslint clean on touched files, `test:run` ✅ 22. Members page needs live Zitadel+backend for E2E.
 
 ## Phase 5 — Feature surfaces (F)
 1. Catalogue: streams list/create/edit/delete, recordings (DVR), restream targets (**bare-array PUT**), telemetry — rewire `/admin` from hardcoded HLS to `POST /catalogue/streams` + `POST .../sync-token` (`{token, sync_token, ws_sync_url, ...}` — drift §4 in `01`).
@@ -68,13 +70,13 @@ Rules editor, Tasks manager, Campaigns manager, Broadcast notifications (22 endp
 | 1 | Auth integration | **A — SPA OIDC code+PKCE against Zitadel** |
 | 2 | Cross-origin strategy | **dev proxy (`quasar.config.ts`) + same-origin prod (Traefik `/api/*`,`/ws/*`)** |
 | 7 | `MISSING-BACKEND` items (file upload, FCM, search, OG-meta) | **cut scope** — delete/stub, revisit if backend adds them |
+| 3 | Starter features (39 `DROP` rows) | **minimum — leave unrouted, no nav pruning** (navs chain dormant; user decision 2026-10-12) |
+| 6 | Routes to restore | **minimum — `/auth/login`, `/error`, `/members`; dashboard deferred** |
 | — | Branching | work on `feat/api-refactor`, phase-by-phase commits |
 
 **Still open:**
 
 | # | Decision | Options | Recommendation |
 |---|---|---|---|
-| 3 | Starter features (39 `DROP` rows) | delete pages/code vs leave unrouted | delete nav refs now, delete pages in cleanup pass |
-| 4 | Contact form backend | new xt-plat endpoint vs Supabase vs `mailto:` | decide in Phase 1 |
-| 5 | Blog backend | Supabase vs xt-plat vs static | decide in Phase 4 |
-| 6 | Routes to restore | minimum: `/auth`, `/error*`, members; dashboard optional | minimum first |
+| 4 | Contact form backend | new xt-plat endpoint vs Supabase vs `mailto:` | decide when touching landing contact page |
+| 5 | Blog backend | Supabase vs xt-plat vs static | decide when touching landing blog pages |

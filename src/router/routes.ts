@@ -17,6 +17,17 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: '/error',
+    name: 'error',
+    component: () => import('@/pages/error.vue'),
+  },
+  {
+    path: '/members',
+    name: 'members',
+    component: () => import('@/pages/members/index.vue'),
+    meta: { requireAuth: true },
+  },
+  {
     path: '/admin',
     name: 'admin',
     component: () => import('@/pages/admin/index.vue'),

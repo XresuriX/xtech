@@ -366,6 +366,18 @@ export default {
         'months': 'January_February_March_April_May_June_July_August_September_October_November_December',
         'monthShorts': 'Jan._Feb._Mar._Apr._May_Jun._Jul._Aug._Sep._Oct._Nov._Dec.'
     },
+    'members': {
+        'title': 'Organization members',
+        'userId': 'User ID',
+        'role': 'Role',
+        'joinedAt': 'Joined',
+        'actions': 'Actions',
+        'add': 'Add member',
+        'addTitle': 'Add member',
+        'changeRole': 'Change role',
+        'removeConfirm': 'Remove this member from the organization?',
+        'noOrg': 'No organization found for your account yet.',
+    },
     'authen': {
         'login': 'Login',
         'ssoSignIn': 'Sign in with SSO',
